@@ -7,7 +7,7 @@ const DashboardPage = () => {
     const {user}=  useUser();
 
   return (
-    <div>
+    <div>Welcome back , 
        {user?.firstName}
        {user?.lastName} 
       
