@@ -1,8 +1,10 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { api } from "@/trpc/react";
 import React from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 type FormInput = {
   repoUrl: string;
@@ -11,8 +13,25 @@ type FormInput = {
 };
 const CreatePage = () => {
   const { register, handleSubmit, reset } = useForm<FormInput>();
+  const createProject = api.project.createProject.useMutation();
   function onSubmit(data: FormInput) {
-    window.alert(JSON.stringify(data, null, 2));
+    // window.alert(JSON.stringify(data, null, 2));
+    createProject.mutate(
+      {
+        githubUrl: data.repoUrl,
+        name: data.projectName,
+        githubToken: data.githubToken,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Project Created Successfully");
+          reset();
+        },
+        onError: () => {
+          toast.error("Failed to create project");
+        },
+      },
+    );
     return true;
   }
 
@@ -24,7 +43,7 @@ const CreatePage = () => {
           <h1 className="text-2xl font-semibold">
             Link your GitHub repository
           </h1>
-          <p className="test-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Enter the URL of your repository to link it to GitOps.ai
           </p>
         </div>
@@ -50,9 +69,10 @@ const CreatePage = () => {
             <div className="h-4"></div>
             <Button
               type="submit"
-              className="w-full bg-primary text-white rounded-md p-2"
+              disabled={createProject.isPending}
+              className="w-full rounded-md bg-primary p-2 text-white"
             >
-               Create Project
+              Create Project
             </Button>
           </form>
         </div>
@@ -62,3 +82,5 @@ const CreatePage = () => {
 };
 
 export default CreatePage;
+
+
