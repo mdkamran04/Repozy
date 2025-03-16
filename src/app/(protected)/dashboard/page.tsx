@@ -11,6 +11,7 @@ const DashboardPage = () => {
 
   return (
     <div>
+      {project?.id}
       <div className="flex flex-wrap items-center justify-between gap-y-4">
         {/* GitHub Link here */}
         <div className="w-fit items-center rounded-md bg-primary px-2 py-3">
