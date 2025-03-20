@@ -6,7 +6,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
 
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-export const summariseCommit = async (diff: string) => {
+export const aiSummariseCommit = async (diff: string) => {
   //https://github.com/owner/repoName/commit/<commitHash>.diff
 
   const response = await model.generateContent([
@@ -48,7 +48,7 @@ Please summarise the following diff file: \n\n${diff}
 };
 
 console.log(
-  await summariseCommit(`
+  await aiSummariseCommit(`
     diff --git a/.eslintrc.cjs b/.eslintrc.cjs
 index a92fb0b..17f931d 100644
 --- a/.eslintrc.cjs
