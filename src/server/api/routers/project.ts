@@ -1,5 +1,7 @@
+import { pollCommits } from "@/lib/github";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { z } from "zod";
+import { clerkClient } from "@clerk/clerk-sdk-node";
 
 export const projectRouter = createTRPCRouter({
   createProject: protectedProcedure
@@ -11,29 +13,58 @@ export const projectRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
+      if (!ctx.user?.userId) throw new Error("User not authenticated");
+
+      // Fetch full user from Clerk
+      const clerkUser = await clerkClient.users.getUser(ctx.user.userId);
+
+      // Get primary email
+      const primaryEmailId = clerkUser.primaryEmailAddressId;
+      const primaryEmail = clerkUser.emailAddresses.find(e => e.id === primaryEmailId);
+      const email = primaryEmail?.emailAddress;
+
+      if (!email) throw new Error("User email not found");
+
+      // ✅ Find user by email first to avoid unique constraint errors
+      let user = await ctx.db.user.findUnique({ where: { emailAddress: email } });
+
+      if (!user) {
+        // Create new user if not found
+        user = await ctx.db.user.create({
+          data: {
+            id: ctx.user.userId,
+            emailAddress: email,
+          },
+        });
+      } else if (user.id !== ctx.user.userId) {
+        // Optional: update user id if it differs from session id
+        user = await ctx.db.user.update({
+          where: { emailAddress: email },
+          data: { id: ctx.user.userId },
+        });
+      }
+
+      // Create project
       const project = await ctx.db.project.create({
         data: {
           githubUrl: input.githubUrl,
           name: input.name,
-          userToProjects: {
-            create: {
-              userId: ctx.user.userId!,
-            },
-          },
+          userToProjects: { create: { userId: user.id } },
         },
       });
+
+      // Poll commits (optional)
+      await pollCommits(project.id);
+
       return project;
     }),
-    getProjects: protectedProcedure.query(async({ctx}) => {
-      return await ctx.db.project.findMany({
-        where: {
-          userToProjects: {
-            some: {
-              userId: ctx.user.userId!,
-            },
-          },
-          deletedAt: null,
-        },
-      });
-    })
+
+  getProjects: protectedProcedure.query(async ({ ctx }) => {
+    return await ctx.db.project.findMany({
+      where: {
+        userToProjects: { some: { userId: ctx.user.userId! } },
+        deletedAt: null,
+      },
+    });
+  }),
 });

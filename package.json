@@ -21,6 +21,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@clerk/clerk-sdk-node": "^4.13.23",
     "@clerk/nextjs": "^6.12.4",
     "@google/generative-ai": "^0.24.0",
     "@hookform/resolvers": "^4.1.3",
