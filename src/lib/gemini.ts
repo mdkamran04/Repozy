@@ -1,5 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import dotenv from "dotenv";
+import * as dotenv from "dotenv";
+import { Document } from "@langchain/core/documents";
+import { SourceCode } from "eslint";
 
 // Load environment variables
 dotenv.config();
@@ -49,19 +51,25 @@ ${diff}
   }
 };
 
-// // Example test
-// if (require.main === module) {
-//   (async () => {
-//     const exampleDiff = `
-// diff --git a/src/index.ts b/src/index.ts
-// index abc123..def456 100644
-// --- a/src/index.ts
-// +++ b/src/index.ts
-// @@ -1,4 +1,4 @@
-// -console.log("Hello world");
-// +console.log("Hello GitOps AI");
-//     `;
-//     const summary = await aiSummariseCommit(exampleDiff);
-//     console.log("AI Summary:", summary);
-//   })();
-// }
+export async function summarizeCode(doc: Document) {
+  console.log("Getting summary for :", doc.metadata.source);
+  const code = doc.pageContent.slice(0, 10000);
+  const response = await model.generateContent([
+    `You are an expert senior software engineer who specializes in onboarding new junior software engineers onto projects . `,
+    `You are onboarding a new junior software engineer onto a project. The junior software engineer is familiar with programming concepts but has not seen this code before. Your task is to provide a concise and clear summary of the ${doc.metadata.source} code file to help the junior software engineer understand its purpose and functionality quickly. `,
+    `Here is the code file: ${code}
+    
+    Give a summary no more than 100 words that would help a junior software engineer understand the purpose and functionality of this code file.`,
+  ]);
+  return response.response.text();
+
+}
+
+export async function generateEmbedding(summary: string) {
+  const model = genAI.getGenerativeModel({
+    model: "text-embedding-004"
+  });
+  const result = await model.embedContent(summary);
+  return result.embedding;
+}
+

@@ -2,6 +2,7 @@ import { pollCommits } from "@/lib/github";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { z } from "zod";
 import { clerkClient } from "@clerk/clerk-sdk-node";
+import { indexGithubRepo } from "@/lib/github-loader";
 
 export const projectRouter = createTRPCRouter({
   createProject: protectedProcedure
@@ -52,6 +53,9 @@ export const projectRouter = createTRPCRouter({
           userToProjects: { create: { userId: user.id } },
         },
       });
+
+
+      await indexGithubRepo(project.id, input.githubUrl, input.githubToken);
 
       // Poll commits (optional)
       await pollCommits(project.id);
