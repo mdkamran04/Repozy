@@ -53,15 +53,21 @@ ${diff}
 
 export async function summarizeCode(doc: Document) {
   console.log("Getting summary for :", doc.metadata.source);
-  const code = doc.pageContent.slice(0, 10000);
-  const response = await model.generateContent([
-    `You are an expert senior software engineer who specializes in onboarding new junior software engineers onto projects . `,
-    `You are onboarding a new junior software engineer onto a project. The junior software engineer is familiar with programming concepts but has not seen this code before. Your task is to provide a concise and clear summary of the ${doc.metadata.source} code file to help the junior software engineer understand its purpose and functionality quickly. `,
-    `Here is the code file: ${code}
+  try {
+    const code = doc.pageContent.slice(0, 10000);
+    const response = await model.generateContent([
+      `You are an expert senior software engineer who specializes in onboarding new junior software engineers onto projects . `,
+      `You are onboarding a new junior software engineer onto a project. The junior software engineer is familiar with programming concepts but has not seen this code before. Your task is to provide a concise and clear summary of the ${doc.metadata.source} code file to help the junior software engineer understand its purpose and functionality quickly. `,
+      `Here is the code file: ${code}
     
     Give a summary no more than 100 words that would help a junior software engineer understand the purpose and functionality of this code file.`,
-  ]);
-  return response.response.text();
+    ]);
+    return response.response.text();
+  } catch (err) {
+    console.warn("AI summarization failed, returning empty summary:", err);
+    return ""; // fallback so project creation won't fail
+  }
+
 
 }
 
