@@ -13,7 +13,7 @@ export async function askQuestion(question: string, projectId: string) {
     const vectorQuery = `[${queryVector.join(',')}]`;
 
     const result = await db.$queryRaw`
-    SELECT "fileName ", "sourceCode", 
+    SELECT "fileName", "sourceCode", "summary", 
     1 - ("summaryEmbedding" <=> ${vectorQuery}::vector) AS similarity
     FROM "SourceCodeEmbedding"
     WHERE 1 - ("summaryEmbedding" <=> ${vectorQuery}::vector) > .5
@@ -66,7 +66,7 @@ export async function askQuestion(question: string, projectId: string) {
     })();
 
     return {
-        output: stream,
+        output: stream.value,
         filesReferences: result
 
     }
