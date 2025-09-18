@@ -1,4 +1,6 @@
 import { GithubRepoLoader } from "@langchain/community/document_loaders/web/github";
+import { generate } from "node_modules/@langchain/core/dist/utils/fast-json-patch";
+import { Document } from "@langchain/core/documents";
 
 export const loadGithubRepo = async (githubUrl: string, githubToken?: string) => {
     const loader = new GithubRepoLoader(githubUrl, {
@@ -12,4 +14,13 @@ export const loadGithubRepo = async (githubUrl: string, githubToken?: string) =>
 
     const doc = await loader.load();
     return doc;
+}
+
+export const indexGithubRepo = async (projectId: string ,githubUrl: string, githubToken?: string) => {
+    const docs = await loadGithubRepo(githubUrl, githubToken);
+    const allEmbeddings = await generateEmbeddings(docs);
+}
+const generateEmbeddings = async (docs: Document[]) => {
+    return await Promise.all(docs.map(async (doc) => {
+    }));
 }

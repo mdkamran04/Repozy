@@ -49,19 +49,19 @@ ${diff}
   }
 };
 
-// Example test
-if (require.main === module) {
-  (async () => {
-    const exampleDiff = `
-diff --git a/src/index.ts b/src/index.ts
-index abc123..def456 100644
---- a/src/index.ts
-+++ b/src/index.ts
-@@ -1,4 +1,4 @@
--console.log("Hello world");
-+console.log("Hello GitOps AI");
-    `;
-    const summary = await aiSummariseCommit(exampleDiff);
-    console.log("AI Summary:", summary);
-  })();
-}
+// // Example test
+// if (require.main === module) {
+//   (async () => {
+//     const exampleDiff = `
+// diff --git a/src/index.ts b/src/index.ts
+// index abc123..def456 100644
+// --- a/src/index.ts
+// +++ b/src/index.ts
+// @@ -1,4 +1,4 @@
+// -console.log("Hello world");
+// +console.log("Hello GitOps AI");
+//     `;
+//     const summary = await aiSummariseCommit(exampleDiff);
+//     console.log("AI Summary:", summary);
+//   })();
+// }
