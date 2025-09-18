@@ -70,6 +70,6 @@ export async function generateEmbedding(summary: string) {
     model: "text-embedding-004"
   });
   const result = await model.embedContent(summary);
-  return result.embedding;
+  return result.embedding.values;
 }
 
