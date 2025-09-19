@@ -50,20 +50,20 @@ const AskQuestionCard = () => {
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[80vh] sm:max-w-[80vw]">
+        <DialogContent className="max-h-[80vh] sm:max-w-[80vw] overflow-y-auto flex flex-col">
           <DialogHeader>
             <DialogTitle>
               <Image src="/logo3.png" alt="logo" width={40} height={40} />
             </DialogTitle>
           </DialogHeader>
-          <MDEditor.Markdown
-            source={answer}
-            style={{ backgroundColor: "white", color: "black" }}
-            className="prose !h-full max-h-[40vh] max-w-none overflow-y-scroll rounded-md p-4"
-          />
-
-          <div className="h-4"></div>
-          <CodeReferences filesReferences={filesReferences} />
+          <div className="space-y-4 overflow-scroll scroll-bar-none">
+            <MDEditor.Markdown
+              source={answer}
+              style={{ backgroundColor: "white", color: "black" }}
+              className="prose max-w-none rounded-md p-4"
+            />
+            <CodeReferences filesReferences={filesReferences} />
+          </div>
 
           <Button
             type="button"

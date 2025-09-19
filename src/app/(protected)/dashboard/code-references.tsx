@@ -11,41 +11,51 @@ type Props = {
 };
 
 const CodeReferences = ({ filesReferences }: Props) => {
-  const [tab, setTab] = React.useState(filesReferences[0]?.fileName ?? "");
+  const [tab, setTab] = React.useState(filesReferences[0]?.fileName);
 
   if (filesReferences.length === 0) return null;
 
   return (
     <div className="max-w-[70vw]">
       <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <div className="flex gap-2 overflow-x-auto rounded-md bg-gray-200 p-1">
+        {/* file tabs */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-none rounded-md bg-gray-200 p-1">
           {filesReferences.map((file) => (
             <button
+              onClick={() => setTab(file.fileName)}
               key={file.fileName}
               className={cn(
                 "whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted",
                 {
                   "bg-primary text-primary-foreground": tab === file.fileName,
-                },
+                }
               )}
             >
               {file.fileName}
             </button>
           ))}
         </div>
+
+        {/* code area */}
         {filesReferences.map((file) => (
           <TabsContent
             key={file.fileName}
             value={file.fileName}
-            className="max-h-[40vh] max-w-7xl overflow-scroll rounded-md"
+            className="max-h-[40vh] max-w-7xl rounded-md overflow-hidden"
           >
-            <SyntaxHighlighter
-              language="typescript"
-              style={lucario}
-              
-            >
-              {file.sourceCode}
-            </SyntaxHighlighter>
+            {/* Only show scrollbars when hovered */}
+            <div className="h-full w-full overflow-hidden hover:overflow-auto rounded-md">
+              <SyntaxHighlighter
+                language="typescript"
+                style={lucario}
+                customStyle={{
+                  margin: 0,
+                  maxHeight: "40vh",
+                }}
+              >
+                {file.sourceCode}
+              </SyntaxHighlighter>
+            </div>
           </TabsContent>
         ))}
       </Tabs>
