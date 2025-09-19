@@ -73,9 +73,9 @@ export const projectRouter = createTRPCRouter({
   }),
   getCommits: protectedProcedure.input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {
-      pollCommits(input.projectId).then().catch(console.error); 
+      pollCommits(input.projectId).then().catch(console.error);
       return await ctx.db.commit.findMany({
-        where: { projectId: input.projectId }  
+        where: { projectId: input.projectId }
       });
     }),
 
@@ -84,8 +84,8 @@ export const projectRouter = createTRPCRouter({
       projectId: z.string(),
       question: z.string(),
       answer: z.string(),
-      filesReferences:z.any()
-      
+      filesReferences: z.any()
+
     }))
     .mutation(async ({ ctx, input }) => {
       return await ctx.db.question.create({
@@ -98,5 +98,14 @@ export const projectRouter = createTRPCRouter({
         },
       });
     }),
-     
+  getQuestions: protectedProcedure
+    .input(z.object({ projectId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      return await ctx.db.question.findMany({
+        where: { projectId: input.projectId },
+        include: { user: true },
+        orderBy: { createdAt: "desc" },
+      });
+    }),
+
 });
