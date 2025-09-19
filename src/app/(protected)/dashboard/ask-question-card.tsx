@@ -13,10 +13,11 @@ import Image from "next/image";
 import React from "react";
 import { askQuestion } from "./actions";
 import { set } from "date-fns";
-import { readStreamableValue } from "@ai-sdk/rsc";
+import { readStreamableValue } from "ai/rsc";
 import MDEditor from "@uiw/react-md-editor";
 import { Code } from "lucide-react";
 import CodeReferences from "./code-references";
+import { StreamableValue } from "ai/rsc";
 
 const AskQuestionCard = () => {
   const { project } = useProject();
@@ -49,7 +50,7 @@ const AskQuestionCard = () => {
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-[80vw] max-h-[80vh] ">
+        <DialogContent className="max-h-[80vh] sm:max-w-[80vw]">
           <DialogHeader>
             <DialogTitle>
               <Image src="/logo3.png" alt="logo" width={40} height={40} />
@@ -58,13 +59,12 @@ const AskQuestionCard = () => {
           <MDEditor.Markdown
             source={answer}
             style={{ backgroundColor: "white", color: "black" }}
-            className="!h-full max-h-[40vh] rounded-md p-4  prose max-w-none overflow-y-scroll "
+            className="prose !h-full max-h-[40vh] max-w-none overflow-y-scroll rounded-md p-4"
           />
 
           <div className="h-4"></div>
           <CodeReferences filesReferences={filesReferences} />
 
-          
           <Button
             type="button"
             onClick={() => {

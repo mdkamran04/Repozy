@@ -21,8 +21,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ai-sdk/google": "^2.0.14",
-    "@ai-sdk/rsc": "^1.0.45",
+    "@ai-sdk/google": "^0.0.55",
     "@clerk/clerk-sdk-node": "^4.13.23",
     "@clerk/nextjs": "^6.12.4",
     "@google/generative-ai": "^0.24.0",
@@ -64,7 +63,7 @@
     "@trpc/server": "^11.0.0-rc.446",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@uiw/react-md-editor": "^4.0.8",
-    "ai": "^5.0.45",
+    "ai": "^3.4.33",
     "axios": "^1.8.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

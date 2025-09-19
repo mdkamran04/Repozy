@@ -1,6 +1,7 @@
 'use server'
 import { streamText } from 'ai';
-import {createStreamableValue}  from '@ai-sdk/rsc';
+import {createStreamableValue} from 'ai/rsc';
+
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateEmbedding } from '@/lib/gemini';
 import { db } from '@/server/db';
@@ -28,9 +29,11 @@ export async function askQuestion(question: string, projectId: string) {
     for (const doc of result) {
         context += `Source: ${doc.fileName}\n Code Content: ${doc.sourceCode}\n Summary of File: ${doc.summary}\n\n`;
     }
-
+    
+    
+(async () => {
     const { textStream } = await streamText({
-        model: google("gemini-1.5-flash"),
+        model: google('gemini-1.5-flash'),
         prompt: `
     You are an AI code assistant who answers questions about the codebase. 
     Your target audience is a technical intern.
@@ -59,16 +62,11 @@ export async function askQuestion(question: string, projectId: string) {
     Be as detailed as possible when answering.
 `,
     });
-    // console.log("==== CONTEXT SENT TO GEMINI ====");
-    // console.log(context);
-    // console.log("================================");
 
-
-    (async () => {
-        for await (const delta of textStream) {
-            stream.update(delta);
-        }
-        stream.done();
+    for await (const delta of textStream) {
+        stream.update(delta);
+    }
+    stream.done();
     })();
 
     return {
