@@ -1,4 +1,4 @@
-"use cleint";
+"use client";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 
 const MeetingCard = () => {
   const [isUploading, setIsUploading] = React.useState(false);
-  const [progess, setProgress] = React.useState(0);
+  const [progress, setProgress] = React.useState(0);
   const { getRootProps, getInputProps } = useDropzone({
     accept: { "audio/*": [".mp3", ".wav", ".ogg", ".m4a"] },
     multiple: false,
@@ -54,8 +54,8 @@ const MeetingCard = () => {
         <div>
           <CircularProgressbar
             className="size-20"
-            value={progess}
-            text={`${progess}%`}
+            value={progress}
+            text={`${progress}%`}
             styles={buildStyles({
               pathColor: "#22c55e",
               textColor: "#22c55e",
