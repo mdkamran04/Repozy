@@ -1,12 +1,14 @@
 'use server'
 import { streamText } from 'ai';
-import { createStreamableValue } from '@ai-sdk/rsc';
+import {createStreamableValue}  from '@ai-sdk/rsc';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { generateEmbedding } from '@/lib/gemini';
 import { db } from '@/server/db';
+
 const google = createGoogleGenerativeAI({
     apiKey: process.env.GEMINI_API_KEY!
 });
+
 export async function askQuestion(question: string, projectId: string) {
     const stream = createStreamableValue();
     const queryVector = await generateEmbedding(question);
@@ -20,18 +22,16 @@ export async function askQuestion(question: string, projectId: string) {
     AND "projectId" = ${projectId}
     ORDER BY similarity
     DESC LIMIT 10;  
-    `as { fileName: string, sourceCode: string, summary: string }[];
-
-
+    ` as { fileName: string, sourceCode: string, summary: string }[];
 
     let context = '';
     for (const doc of result) {
         context += `Source: ${doc.fileName}\n Code Content: ${doc.sourceCode}\n Summary of File: ${doc.summary}\n\n`;
     }
-    (async () => {
-        const { textStream } = await streamText({
-            model: google("gemini-1.5-flash"),
-            prompt: `
+
+    const { textStream } = await streamText({
+        model: google("gemini-1.5-flash"),
+        prompt: `
     You are an AI code assistant who answers questions about the codebase. 
     Your target audience is a technical intern.
 
@@ -58,7 +58,13 @@ export async function askQuestion(question: string, projectId: string) {
     Answer in markdown syntax, with code snippets if needed. 
     Be as detailed as possible when answering.
 `,
-        });
+    });
+    // console.log("==== CONTEXT SENT TO GEMINI ====");
+    // console.log(context);
+    // console.log("================================");
+
+
+    (async () => {
         for await (const delta of textStream) {
             stream.update(delta);
         }
@@ -68,7 +74,6 @@ export async function askQuestion(question: string, projectId: string) {
     return {
         output: stream.value,
         filesReferences: result
-
     }
 
 }

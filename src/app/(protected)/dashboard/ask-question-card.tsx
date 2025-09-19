@@ -14,6 +14,9 @@ import React from "react";
 import { askQuestion } from "./actions";
 import { set } from "date-fns";
 import { readStreamableValue } from "@ai-sdk/rsc";
+import MDEditor from "@uiw/react-md-editor";
+import { Code } from "lucide-react";
+import CodeReferences from "./code-references";
 
 const AskQuestionCard = () => {
   const { project } = useProject();
@@ -26,12 +29,14 @@ const AskQuestionCard = () => {
   const [answer, setAnswer] = React.useState("");
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    setAnswer("");
+    setFilesReferences([]);
     e.preventDefault();
     if (!project?.id) return;
     setLoading(true);
-    setOpen(true);
 
     const { output, filesReferences } = await askQuestion(question, project.id);
+    setOpen(true);
     setFilesReferences(filesReferences);
 
     for await (const delta of readStreamableValue(output)) {
@@ -44,17 +49,30 @@ const AskQuestionCard = () => {
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[80vw] max-h-[80vh] ">
           <DialogHeader>
             <DialogTitle>
               <Image src="/logo3.png" alt="logo" width={40} height={40} />
             </DialogTitle>
           </DialogHeader>
-          {answer}
-          <h1>File References</h1>
-          {filesReferences.map((file) => {
-            return <span> {file.fileName}</span>;
-          })}
+          <MDEditor.Markdown
+            source={answer}
+            style={{ backgroundColor: "white", color: "black" }}
+            className="!h-full max-h-[40vh] rounded-md p-4  prose max-w-none overflow-y-scroll "
+          />
+
+          <div className="h-4"></div>
+          <CodeReferences filesReferences={filesReferences} />
+
+          
+          <Button
+            type="button"
+            onClick={() => {
+              (setOpen(false), setAnswer(""));
+            }}
+          >
+            Close
+          </Button>
         </DialogContent>
       </Dialog>
       <Card className="relative col-span-3">
@@ -69,7 +87,9 @@ const AskQuestionCard = () => {
               onChange={(e) => setQuestion(e.target.value)}
             />
             <div className="h-4"></div>
-            <Button type="submit">Ask GitOps.ai </Button>
+            <Button type="submit" disabled={loading}>
+              Ask GitOps.ai{" "}
+            </Button>
           </form>
         </CardContent>
       </Card>
