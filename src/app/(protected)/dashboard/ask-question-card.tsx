@@ -18,6 +18,9 @@ import MDEditor from "@uiw/react-md-editor";
 import { Code } from "lucide-react";
 import CodeReferences from "./code-references";
 import { StreamableValue } from "ai/rsc";
+import { api } from "@/trpc/react";
+import { on } from "events";
+import { toast } from "sonner";
 
 const AskQuestionCard = () => {
   const { project } = useProject();
@@ -28,6 +31,7 @@ const AskQuestionCard = () => {
     { fileName: string; sourceCode: string; summary: string }[]
   >([]);
   const [answer, setAnswer] = React.useState("");
+  const saveAnswer = api.project.saveAnswer.useMutation();
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setAnswer("");
@@ -50,13 +54,39 @@ const AskQuestionCard = () => {
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[80vh] sm:max-w-[80vw] overflow-y-auto flex flex-col">
+        <DialogContent className="flex max-h-[80vh] flex-col overflow-y-auto sm:max-w-[80vw]">
           <DialogHeader>
-            <DialogTitle>
-              <Image src="/logo3.png" alt="logo" width={40} height={40} />
-            </DialogTitle>
+            <div className="flex items-center gap-2">
+              <DialogTitle>
+                <Image src="/logo3.png" alt="logo" width={40} height={40} />
+              </DialogTitle>
+              <Button
+                disabled={saveAnswer.isPending}
+                variant="outline"
+                onClick={() =>
+                  saveAnswer.mutate(
+                    {
+                      projectId: project?.id!,
+                      question,
+                      answer,
+                      filesReferences,
+                    },
+                    {
+                      onSuccess: () => {
+                        toast.success("Answer saved successfully");
+                      },
+                      onError: () => {
+                        toast.error("Failed to save answer");
+                      },
+                    },
+                  )
+                }
+              >
+                Save Answer
+              </Button>
+            </div>
           </DialogHeader>
-          <div className="space-y-4 overflow-scroll scroll-bar-none">
+          <div className="scroll-bar-none space-y-4 overflow-scroll">
             <MDEditor.Markdown
               source={answer}
               style={{ backgroundColor: "white", color: "black" }}
