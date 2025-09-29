@@ -1,11 +1,11 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
   extensions = [vector]
 }
 
@@ -19,7 +19,7 @@ model User {
   emailAddress   String          @unique
   credits        Int             @default(150)
   userToProjects UserToProject[]
-  questionsAsked      Question[]
+  questionsAsked Question[]
 }
 
 model Project {
@@ -32,11 +32,11 @@ model Project {
 
   deletedAt DateTime?
 
-  userToProjects UserToProject[]
-  commits        Commit[]
+  userToProjects       UserToProject[]
+  commits              Commit[]
   sourceCodeEmbeddings SourceCodeEmbedding[]
-  savedQuestions      Question[]
-
+  savedQuestions       Question[]
+  meetings             Meeting[]
 }
 
 model UserToProject {
@@ -54,16 +54,48 @@ model UserToProject {
 }
 
 model SourceCodeEmbedding {
-  id              String   @id @default(cuid())
+  id               String                      @id @default(cuid())
   summaryEmbedding Unsupported("vector(768)")? // for PostgreSQL + pgvector
-  sourceCode      String
-  fileName        String
-  summary         String
+  sourceCode       String
+  fileName         String
+  summary          String
 
-  projectId       String
-  project         Project  @relation(fields: [projectId], references: [id])
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id])
 }
 
+model Meeting {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  meetingUrl String
+  projectId  String
+  project    Project @relation(fields: [projectId], references: [id])
+
+  status MeetingStatus @default(PROCESSING)
+  issues Issues[]
+}
+
+model Issues {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  start    String
+  end      String
+  gist     String
+  headline String
+  summary  String
+
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id])
+}
+
+enum MeetingStatus {
+  PROCESSING
+  COMPLETED
+}
 
 model Question {
   id        String   @id @default(cuid())
@@ -72,18 +104,15 @@ model Question {
 
   question String
   answer   String
-  
+
   filesReferences Json?
 
   projectId String
   project   Project @relation(fields: [projectId], references: [id])
 
-  userId    String
-  user     User    @relation(fields: [userId], references: [id])
-
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 }
-
-
 
 model Commit {
   id        String   @id @default(cuid())
@@ -98,6 +127,6 @@ model Commit {
   commitAuthorName   String
   commitAuthorAvatar String
   commitDate         DateTime
-  
-  summary            String
+
+  summary String
 }
