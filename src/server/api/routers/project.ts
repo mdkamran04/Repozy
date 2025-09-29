@@ -129,7 +129,8 @@ export const projectRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       return await ctx.db.meeting.findMany({
         where: { projectId: input.projectId },
-        orderBy: { createdAt: "desc" },
+        include: { issues: true },
+        
       });
     }),   
 
