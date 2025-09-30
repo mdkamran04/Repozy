@@ -9,15 +9,31 @@ import { useDropzone } from "react-dropzone";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import { api } from "@/trpc/react";
 import useProject from "@/hooks/use-project";
-import { on } from "events";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { useMutation } from "@tanstack/react-query";
+import axios from "axios";
 
 const MeetingCard = () => {
   const project = useProject();
+  const processMeeting = useMutation({
+    mutationFn: async (data: {
+      meetingUrl: string;
+      meetingId: string;
+      projectId: string;
+    }) => {
+      const { meetingUrl, meetingId, projectId } = data;
+      const response = await axios.post("/api/process-meeting", {
+        meetingUrl,
+        meetingId,
+        projectId,
+      });
+      return response.data;
+    },
+  });
   const [isUploading, setIsUploading] = React.useState(false);
   const [progress, setProgress] = React.useState(0);
-  const router= useRouter();
+  const router = useRouter();
   const uploadMeeting = api.project.uploadMeeting.useMutation();
   const { getRootProps, getInputProps } = useDropzone({
     accept: { "audio/*": [".mp3", ".wav", ".ogg", ".m4a"] },
@@ -40,13 +56,18 @@ const MeetingCard = () => {
           name: file.name,
         },
         {
-          onSuccess: () => {
+          onSuccess: (meeting) => {
             toast.success("Meeting uploaded successfully");
-            router.push(`/meetings`)
+            router.push(`/meetings`);
+            processMeeting.mutateAsync({
+              meetingUrl: downloadURL,
+              meetingId: meeting.id,
+              projectId: project.project?.id || "",
+            });
           },
-          onError:() => {
+          onError: () => {
             toast.error("Error uploading meeting");
-          }
+          },
         },
       );
 
