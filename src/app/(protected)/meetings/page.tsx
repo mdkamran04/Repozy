@@ -7,6 +7,10 @@ import MeetingCard from "../dashboard/meeting-card";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { on } from "events";
+import { toast } from "sonner";
+import { ref } from "firebase/storage";
+import useRefetch from "@/hooks/use-refetch";
 
 const MeetingsPage = () => {
   const { projectId } = useProject();
@@ -16,6 +20,8 @@ const MeetingsPage = () => {
       refetchInterval: 5000,
     },
   );
+  const deleteMeeting = api.project.deleteMeeting.useMutation();
+  const refetch = useRefetch();
   return (
     <>
       <MeetingCard />
@@ -46,17 +52,38 @@ const MeetingsPage = () => {
                   )}
                 </div>
               </div>
-              <div className="flex items-center text-xs text-gray-500 gap-x-2">
-                <p className="whitespace-nowrap"> {meeting.createdAt.toLocaleDateString()}</p>
+              <div className="flex items-center gap-x-2 text-xs text-gray-500">
+                <p className="whitespace-nowrap">
+                  {" "}
+                  {meeting.createdAt.toLocaleDateString()}
+                </p>
                 <p className="truncate">{meeting.issues.length} issues</p>
               </div>
             </div>
-            <div className="flex items-center flex-none gap-x-4">
-                <Link href={`/meetings/${meeting.id}`}>
-                <Button variant="outline">
-                    View Meeting
+            <div className="flex flex-none items-center gap-x-4">
+              <Link href={`/meetings/${meeting.id}`}>
+                <Button variant="outline" size={"sm"}>
+                  View Meeting
                 </Button>
-                </Link>
+              </Link>
+              <Button
+                disabled={deleteMeeting.isPending}
+                variant={"destructive"}
+                size={"sm"}
+                onClick={() =>
+                  deleteMeeting.mutate(
+                    { meetingId: meeting.id },
+                    {
+                      onSuccess: () => {
+                        toast.success("Meeting deleted successfully");
+                        refetch();
+                      },
+                    },
+                  )
+                }
+              >
+                Delete Meeting
+              </Button>
             </div>
           </li>
         ))}
