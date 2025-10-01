@@ -84,7 +84,9 @@ function IssueCard({
               <span className="text-sm text-gray-600">
                 {issue.start}-{issue.end}
               </span>
-              <p className="font-medium italic leading-relaxed text-gray-900">{issue.summary}</p>
+              <p className="font-medium italic leading-relaxed text-gray-900">
+                {issue.summary}
+              </p>
             </blockquote>
           </DialogHeader>
         </DialogContent>

@@ -8,13 +8,13 @@ import Link from "next/link";
 import CommitLog from "./commit-log";
 import AskQuestionCard from "./ask-question-card";
 import MeetingCard from "./meeting-card";
+import ArchiveButton from "./archive-button";
 
 const DashboardPage = () => {
   const { project } = useProject();
 
   return (
     <div>
-      
       <div className="flex flex-wrap items-center justify-between gap-y-4">
         {/* GitHub Link here */}
         <div className="w-fit items-center rounded-md bg-primary px-2 py-3">
@@ -37,7 +37,9 @@ const DashboardPage = () => {
         </div>
         <div className="h-4"></div>
         <div className="flex items-center gap-4">
-          Team Members |Invite btn| archive btn
+          Team Members 
+          |Invite btn|
+          <ArchiveButton />
         </div>
       </div>
       <div className="mt-4">
