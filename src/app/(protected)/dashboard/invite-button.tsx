@@ -1,4 +1,5 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,13 +9,21 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import useProject from "@/hooks/use-project";
-import { on } from "events";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const InviteButton = () => {
   const { projectId } = useProject();
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
+
+  // Set invite link after component mounts
+  useEffect(() => {
+    if (typeof window !== "undefined" && projectId) {
+      setInviteLink(`${window.location.origin}/join/${projectId}`);
+    }
+  }, [projectId]);
+
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
@@ -23,22 +32,24 @@ const InviteButton = () => {
             <DialogTitle>Invite Team Members</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-gray-500">
-            Team Members need to Paste this Link
+            Team Members need to paste this link
           </p>
+
           <Input
             readOnly
             className="mt-4"
             onClick={() => {
-              navigator.clipboard.writeText(
-                `${window.location.origin}/join/${projectId}`,
-              );
+              navigator.clipboard.writeText(inviteLink);
               toast.success("Link copied to clipboard");
             }}
-            value={`${window.location.origin}/join/${projectId}`}
-          ></Input>
+            value={inviteLink}
+          />
         </DialogContent>
       </Dialog>
-      <Button size="sm" onClick={() => setOpen(true)}>Invite Members</Button>
+
+      <Button size="sm" onClick={() => setOpen(true)}>
+        Invite Members
+      </Button>
     </>
   );
 };
