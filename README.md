@@ -1,8 +1,8 @@
-# Repozy
+
 
 <p align="center">
   <a href="https://github.com/mdkamran04/Repozy">
-    <img src="E:\DEV PROJECTS\gitops.ai\public\repozy_logo.png" alt="Repozy Mini Logo" width="60">
+    <img src="./public/repozy_logo.png" alt="Repozy Mini Logo" width="60">
   </a>
 </p>
 
@@ -11,7 +11,7 @@
   <i>"Repozy ~ Where Your Code Gets Its Glow-Up"</i>
 </p>
 <p align="center">
-  <img src="E:\DEV PROJECTS\gitops.ai\public\repozy_logo.png" alt="Repozy Full Logo" width="400">
+  <img src="./public/repozy_logo.png" alt="Repozy Full Logo" width="400">
 </p>
 
 ## 🌟 Overview
@@ -49,14 +49,14 @@ To get started with Repozy:
 
 Repozy is built with a robust and modern technology stack:
 
-- **Frontend:** [Specify your frontend framework/library, e.g., React, Next.js, Vue.js]
-- **Backend:** [Specify your backend framework/language, e.g., Node.js, Python/Django/Flask, Go, Ruby on Rails]
+- **Frontend:**  Next.js
+- **Backend:** Node.js
 - **User Authentication:** Clerk
 - **AI Integration:** Gemini AI API
 - **Database:** NeonDB (PostgreSQL)
 - **Meeting & Collaboration:** Firebase
 - **Transcription:** AssemblyAI
-- **Payments:** Razorpay, PayPal
+- **Payments:** Razorpay + PayPal
 - **Deployment & Hosting:** Vercel
 
 ## 📈 Funding & Growth Plan
@@ -67,7 +67,6 @@ With dedicated funding, Repozy aims to:
 - **Introduce Custom Project Automation:** Develop specialized workflows to automate common tasks related to project data syncing, insight generation, and team collaboration within the platform.
 - **Scale Marketing & User Acquisition:** Launch targeted campaigns to reach engineering teams, professional GitHub users, and companies seeking to integrate AI into their project management and code review processes.
 
-We are seeking **$XX,XXX** in investment for core platform development, expanding cloud infrastructure (Vercel, NeonDB), and initiating targeted marketing efforts. Our projected growth targets **X% MoM** subscriber growth, aiming for **X,000+** active, paying users within the first 12 months.
 
 ## 🎯 Market Potential
 
@@ -75,10 +74,10 @@ With over 100 million developers on GitHub and the accelerating adoption of AI i
 
 ## 🤝 Contribution
 
-We welcome contributions from the community! If you're interested in contributing to Repozy, please check out our [Contributing Guidelines](CONTRIBUTING.md) (if you plan to add one).
+We welcome contributions from the community! If you're interested in contributing to Repozy, please email me to [mohamedkamran04@gmail.com].
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LICENSE) file for details. (Or specify your chosen license)
+This project is licensed under the [MIT License](LICENSE) - see the [LICENSE](LICENSE) file for details. 
 
 ---
