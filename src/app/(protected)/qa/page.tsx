@@ -42,7 +42,7 @@ const QAPage = () => {
                     className="rounded-full"
                     height={30}
                     width={30}
-                    src={question.user.imageUrl ?? "/avatar.jpg"}
+                    src={question.user.imageUrl ?? "/repozy.png"}
                     alt={question.user.firstName ?? "User"}
                   />
                   <div className="flex flex-col text-left">

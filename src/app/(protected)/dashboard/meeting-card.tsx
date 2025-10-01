@@ -87,7 +87,7 @@ const MeetingCard = () => {
             Create a new meeting
           </h3>
           <p className="mt-1 text-center text-sm text-gray-500">
-            Analyse your meetings and get insights with GitOps
+            Analyse your meetings and get insights with Repozy
             <br />
             Powered by AI
           </p>

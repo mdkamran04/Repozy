@@ -12,7 +12,7 @@ const TeamMembers = () => {
       {members?.map((member) => (
         <img
           key={member.id}
-          src={member.user.imageUrl || "/avatar.jpg"}
+          src={member.user.imageUrl || "/repozy.png"}
           alt={member.user.firstName || ""}
           height={40}
           width={30}

@@ -47,7 +47,7 @@ const CreatePage = () => {
             Link your GitHub repository
           </h1>
           <p className="text-sm text-muted-foreground">
-            Enter the URL of your repository to link it to GitOps.ai
+            Enter the URL of your repository to link it to Repozy
           </p>
         </div>
         <div className="h-4"></div>
