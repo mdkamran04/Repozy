@@ -1,15 +1,3 @@
-
-
-<p align="center">
-  <a href="https://github.com/mdkamran04/Repozy">
-    <img src="./public/repozy_logo.png" alt="Repozy Mini Logo" width="60">
-  </a>
-</p>
-
-<h1 align="center">REPOZY</h1>
-<p align="center">
-  <i>"Repozy ~ Where Your Code Gets Its Glow-Up"</i>
-</p>
 <p align="center">
   <img src="./public/repozy_logo.png" alt="Repozy Full Logo" width="400">
 </p>
