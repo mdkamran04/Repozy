@@ -18,13 +18,21 @@ export async function createCashfreeCheckoutSession(credits: number) {
   const { userId } = await auth();
   if (!userId) throw new Error('Not authenticated');
 
-  const amount = (credits * 2) - 1; // Ensure this is a number
+  const amount = (credits * 2) - 1; 
   const orderId = generateUniqueOrderId(userId);
 
-  // Retrieve customer details from  database
-  const customerEmail = 'customer@example.com'; // Replace with actual email
-  const customerPhone = '9999999999'; // Replace with actual phone number
+  // Retrieve customer details from database
+  // NOTE: In a real app, replace these placeholders with actual user data.
+  const customerEmail = 'customer@example.com'; 
+  const customerPhone = '9999999999'; 
 
+  // --- CRITICAL CHANGE HERE ---
+  // Ensure metadata (userId and credits) is stored as a JSON string
+  const metadataPayload = {
+    creditsToPurchase: credits,
+    userId: userId, 
+  };
+  
   const request = {
     order_amount: amount, 
     order_currency: 'INR',
@@ -36,14 +44,17 @@ export async function createCashfreeCheckoutSession(credits: number) {
     },
     order_meta: {
       return_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?order_id={order_id}&order_status={order_status}`,
-      notify_url: `${process.env.NEXT_PUBLIC_URL}/api/cashfree-webhook`,
+      notify_url: `${process.env.NEXT_PUBLIC_URL}/api/webhook/cashfree`, // Use the new path
     },
-    order_note: `Credits purchase: ${credits}`,
+    order_note: JSON.stringify(metadataPayload), // <-- Now a parsable JSON string
   };
 
   try {
-    const response = await cashfree.PGCreateOrder(request);
-    if (response.status === 200 && response.data.payment_session_id) {
+    // API Version is typically required here, even if not explicitly forced by your TS/runtime.
+    // Assuming your working SDK version accepts only the request object without API date:
+    const response = await cashfree.PGCreateOrder(request); 
+    
+    if (response.status === 200 && response.data?.payment_session_id) {
       return {
         success: true,
         paymentSessionId: response.data.payment_session_id,

@@ -10,16 +10,17 @@ datasource db {
 }
 
 model User {
-  id             String          @id @default(cuid())
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  imageUrl       String?
-  firstName      String?
-  lastName       String?
-  emailAddress   String          @unique
-  credits        Int             @default(150)
-  userToProjects UserToProject[]
-  questionsAsked Question[]
+  id                   String                @id @default(cuid())
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  imageUrl             String?
+  firstName            String?
+  lastName             String?
+  emailAddress         String                @unique
+  credits              Int                   @default(150)
+  userToProjects       UserToProject[]
+  questionsAsked       Question[]
+  cashfreeTransactions CashfreeTransaction[]
 }
 
 model Project {
@@ -68,7 +69,7 @@ model Meeting {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  name     String
+  name      String
 
   meetingUrl String
   projectId  String
@@ -91,6 +92,21 @@ model Issues {
 
   meetingId String
   meeting   Meeting @relation(fields: [meetingId], references: [id])
+}
+
+model CashfreeTransaction {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderId    String @unique
+  status     String
+  rawPayload Json?
+
+  userId String
+
+  user    User @relation(fields: [userId], references: [id])
+  credits Int
 }
 
 enum MeetingStatus {
