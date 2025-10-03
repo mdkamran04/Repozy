@@ -5,7 +5,7 @@ import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
 const cashfree = new Cashfree(
-  CFEnvironment.SANDBOX, // Use PRODUCTION for live transactions
+  CFEnvironment.SANDBOX,
   process.env.CASHFREE_APP_ID!,
   process.env.CASHFREE_SECRET_KEY!
 );
@@ -18,23 +18,19 @@ export async function createCashfreeCheckoutSession(credits: number) {
   const { userId } = await auth();
   if (!userId) throw new Error('Not authenticated');
 
-  const amount = (credits * 2) - 1; 
+  const amount = (credits * 2) - 1;
   const orderId = generateUniqueOrderId(userId);
 
-  // Retrieve customer details from database
-  // NOTE: In a real app, replace these placeholders with actual user data.
-  const customerEmail = 'customer@example.com'; 
-  const customerPhone = '9999999999'; 
+  const customerEmail = 'customer@example.com';
+  const customerPhone = '9999999999';
 
-  // --- CRITICAL CHANGE HERE ---
-  // Ensure metadata (userId and credits) is stored as a JSON string
   const metadataPayload = {
     creditsToPurchase: credits,
-    userId: userId, 
+    userId: userId,
   };
-  
+
   const request = {
-    order_amount: amount, 
+    order_amount: amount,
     order_currency: 'INR',
     order_id: orderId,
     customer_details: {
@@ -44,16 +40,13 @@ export async function createCashfreeCheckoutSession(credits: number) {
     },
     order_meta: {
       return_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?order_id={order_id}&order_status={order_status}`,
-      notify_url: `${process.env.NEXT_PUBLIC_URL}/api/webhook/cashfree`, // Use the new path
+      notify_url: `${process.env.NEXT_PUBLIC_URL}/api/webhook/cashfree`,
     },
-    order_note: JSON.stringify(metadataPayload), // <-- Now a parsable JSON string
+    order_note: JSON.stringify(metadataPayload),
   };
 
   try {
-    // API Version is typically required here, even if not explicitly forced by your TS/runtime.
-    // Assuming your working SDK version accepts only the request object without API date:
-    const response = await cashfree.PGCreateOrder(request); 
-    
+    const response = await cashfree.PGCreateOrder(request);
     if (response.status === 200 && response.data?.payment_session_id) {
       return {
         success: true,
