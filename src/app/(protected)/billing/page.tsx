@@ -3,13 +3,49 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { api } from "@/trpc/react";
 import { Info } from "lucide-react";
-import React from "react";
+import React, { useState } from "react"; 
+import { createCashfreeCheckoutSession } from "@/lib/cashfree"; 
+import { load } from "@cashfreepayments/cashfree-js"; 
 
 const BillingPage = () => {
   const { data: user } = api.project.getMyCredits.useQuery();
   const [creditsToBuy, setCreditsToBuy] = React.useState<number[]>([100]);
+  const [isLoading, setIsLoading] = useState(false); 
+
   const creditsToBuyAmount = creditsToBuy[0]!;
-  const price = ((creditsToBuyAmount *2)-1).toFixed(0);     // to fixed is for decimal
+  const price = ((creditsToBuyAmount * 2) - 1).toFixed(0);
+
+  // 2. Add the Payment Handler function
+  const handlePayment = async () => {
+    setIsLoading(true);
+    try {
+      // 2a. Call the Server Action to get the paymentSessionId
+      const orderData = await createCashfreeCheckoutSession(creditsToBuyAmount);
+
+      if (orderData.success) {
+        // 2b. Load the Cashfree JS SDK
+        const cashfree = await load({
+          mode: 'sandbox', // IMPORTANT: Match this to your server's Cashfree.XEnvironment
+        });
+
+        if (cashfree) {
+          // 2c. Initiate the payment redirect
+          cashfree.checkout({
+            paymentSessionId: orderData.paymentSessionId,
+            redirectTarget: '_self', // Opens in the same window
+          });
+        }
+      } else {
+        alert("Failed to create payment session. Please check server logs.");
+      }
+    } catch (error) {
+      console.error("Payment initiation error:", error);
+      alert("An unexpected error occurred during checkout.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div>
       <h1 className="text-xl font-semibold">Billing</h1>
@@ -39,8 +75,13 @@ const BillingPage = () => {
         value={creditsToBuy}
       ></Slider>
       <div className="h-4"></div>
-      <Button>
-        Buy {creditsToBuyAmount} credits for ₹{price}/-
+      <Button 
+        onClick={handlePayment} // 👈 3. Attach the handler
+        disabled={isLoading}    
+      >
+        {isLoading
+          ? "Processing Payment..."
+          : `Buy ${creditsToBuyAmount} credits for ₹${price}/-`}
       </Button>
     </div>
   );
