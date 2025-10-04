@@ -19,7 +19,7 @@ Repozy is an innovative SaaS platform designed to revolutionize the way develope
   - Automatically transcribe meeting audio to text with AssemblyAI for easy reference and knowledge sharing.
 - **Subscription-Based Monetization**
   - Access premium AI features and advanced functionalities through flexible subscription plans.
-  - Secure payment processing via Razorpay and PayPal.
+  - Secure payment processing via Cashfree and PayPal Payments.
 - **Seamless Deployment & Scaling**
   - Hosted and managed on Vercel, ensuring a smooth, high-performance, and scalable user experience.
 
@@ -44,7 +44,7 @@ Repozy is built with a robust and modern technology stack:
 - **Database:** NeonDB (PostgreSQL)
 - **Meeting & Collaboration:** Firebase
 - **Transcription:** AssemblyAI
-- **Payments:** Razorpay + PayPal
+- **Payments:** Cashfree + PayPal
 - **Deployment & Hosting:** Vercel
 
 ## 📈 Funding & Growth Plan
