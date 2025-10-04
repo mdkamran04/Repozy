@@ -10,17 +10,21 @@ datasource db {
 }
 
 model User {
-  id                   String                @id @default(cuid())
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  imageUrl             String?
-  firstName            String?
-  lastName             String?
-  emailAddress         String                @unique
-  credits              Int                   @default(150)
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  imageUrl     String?
+  firstName    String?
+  lastName     String?
+  emailAddress String   @unique
+  credits      Int      @default(150)
+
+  isSynced Boolean @default(false)
+
   userToProjects       UserToProject[]
   questionsAsked       Question[]
   cashfreeTransactions CashfreeTransaction[]
+  cashfreeOrder        CashfreeOrder[]
 }
 
 model Project {
@@ -94,19 +98,34 @@ model Issues {
   meeting   Meeting @relation(fields: [meetingId], references: [id])
 }
 
+model CashfreeOrder {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orderId     String    @unique
+  isFulfilled Boolean   @default(false)
+  fulfilledAt DateTime?
+  userId      String?
+
+  // Optional relation to user who the order was for
+  user User? @relation(fields: [userId], references: [id])
+}
+
 model CashfreeTransaction {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orderId    String @unique
-  status     String
-  rawPayload Json?
+  orderId     String
+  cfPaymentId String @unique
+  status      String
+  rawPayload  Json?
 
-  userId String
-
-  user    User @relation(fields: [userId], references: [id])
+  userId  String
   credits Int
+
+  user User @relation(fields: [userId], references: [id])
 }
 
 enum MeetingStatus {
