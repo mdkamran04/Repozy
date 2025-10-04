@@ -33,7 +33,7 @@ export async function askQuestion(question: string, projectId: string) {
     
 (async () => {
     const { textStream } = await streamText({
-        model: google('gemini-1.5-flash'),
+        model: google('gemini-2.5-flash'),
         prompt: `
     You are an AI code assistant who answers questions about the codebase. 
     Your target audience is a technical intern.
