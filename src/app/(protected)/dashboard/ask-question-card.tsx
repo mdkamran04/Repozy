@@ -60,7 +60,7 @@ const AskQuestionCard = () => {
           <DialogHeader>
             <div className="flex items-center gap-2">
               <DialogTitle>
-                <Image src="/logo3.png" alt="logo" width={40} height={40} />
+                <Image src="/repozy_crop.png" alt="logo" width={40} height={40} />
               </DialogTitle>
               <Button
                 disabled={saveAnswer.isPending}
