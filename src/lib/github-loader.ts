@@ -2,6 +2,7 @@ import { GithubRepoLoader } from "@langchain/community/document_loaders/web/gith
 import { Document } from "@langchain/core/documents";
 import { summarizeCode, generateEmbedding } from "./gemini";
 import { db } from "@/server/db";
+import { Octokit } from "@octokit/rest";
 
 const ALL_IGNORED_FILES = new Set([
     '.gitignore',
@@ -28,9 +29,9 @@ const isIgnoredFile = (filePath: string): boolean => {
     if (ALL_IGNORED_FILES.has(filePath)) {
         return true;
     }
-    
-    if (filePath.endsWith('.svg') || 
-        filePath.endsWith('.css') || 
+
+    if (filePath.endsWith('.svg') ||
+        filePath.endsWith('.css') ||
         filePath.endsWith('.log') ||
         filePath.endsWith('.tmp') ||
         filePath.match(/\.env\./)) {
@@ -39,10 +40,52 @@ const isIgnoredFile = (filePath: string): boolean => {
 
     return false;
 }
+const getFileCount = async (path: string, octokit: Octokit, githubOwner: string, githubRepo: string, acc: number = 0) => {
+    const { data } = await octokit.rest.repos.getContent({
+        owner: githubOwner,
+        repo: githubRepo,
+        path,
+    });
+    if (!Array.isArray(data) && data.type === 'file') return acc + 1;
+    if (Array.isArray(data)) {
+        let fileCount = 0;
+        const directories: string[] = [];
+        for (const item of data) {
+            if (item.type === 'dir') {
+                directories.push(item.path);
+            } else {
+                fileCount += 1;
+            }
+        }
+        if (directories.length > 0) {
+            const directoryCounts = await Promise.all(directories.map(dirPath => getFileCount(dirPath, octokit, githubOwner, githubRepo, 0)));
+            fileCount += directoryCounts.reduce((acc, count) => acc + count, 0);
+        }
+        return acc + fileCount;
+
+    }
+    return acc;
+}
+
+
+export const checkCredits = async (githubUrl: string, githubToken?: string) => {
+    //finds the number of files in the repo
+    const octokit = new Octokit({
+        auth: githubToken,
+    })
+    const githubOwner = githubUrl.split('/')[3];
+    const githubRepo = githubUrl.split('/')[4];
+
+    if (!githubOwner || !githubRepo) return 0;
+
+    const fileCount = await getFileCount('', octokit, githubOwner, githubRepo, 0);
+    return fileCount;
+
+}
 
 export const loadGithubRepo = async (githubUrl: string, githubToken?: string) => {
     const loader = new GithubRepoLoader(githubUrl, {
-        accessToken: githubToken || '', 
+        accessToken: githubToken || '',
         branch: 'main',
         ignorePaths: [
             'node_modules',
@@ -59,7 +102,7 @@ export const loadGithubRepo = async (githubUrl: string, githubToken?: string) =>
             '__pycache__',
             '.pytest_cache',
         ],
-        ignoreFiles: [], 
+        ignoreFiles: [],
         recursive: true,
         unknown: 'warn',
         maxConcurrency: 5,
@@ -95,7 +138,7 @@ export const indexGithubRepo = async (projectId: string, githubUrl: string, gith
     });
 
     const allEmbeddings = await generateEmbeddings(filteredDocs);
-    
+
     await Promise.allSettled(allEmbeddings.map(async (embedding, index) => {
         console.log(`Processing ${index} of ${allEmbeddings.length}: `);
         if (!embedding) return;
