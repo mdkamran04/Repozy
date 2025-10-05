@@ -1,0 +1,62 @@
+name: CI/CD Docker Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      packages: write # Critical for pushing to GHCR
+      
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # --- Pre-build Checks ---
+    - name: Set up Node.js for checks
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: 'npm'
+    
+    - name: Install Dependencies and Run Checks
+      # Runs lint and typecheck before the Docker build to fail fast
+      run: |
+        npm install
+        npm run lint
+        npm run typecheck
+
+    # --- Docker Build & Push ---
+    - name: Docker login to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.CR_PAT }} # GitHub PAT with 'write:packages' scope
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Define image name and tag
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository }}/repozy-app
+        tags: |
+          type=sha,format=long 
+          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }} 
+    
+    - name: Build and push Docker image
+      uses: docker/build-and-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        file: ./Dockerfile # Explicitly use your Dockerfile
