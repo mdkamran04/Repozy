@@ -1,0 +1,17 @@
+
+node_modules
+npm-debug.log
+.next
+out
+/dist
+.env
+.env.*.local
+.vscode
+.idea
+*.log
+.git
+.gitignore
+/prisma/db.sqlite
+/prisma/db.sqlite-journal
+*.js
+*.tsbuildinfo

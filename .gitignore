@@ -41,6 +41,7 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+*.js # This line tells Git to ignore any .js file when a .ts file is present
 
 # idea files
 .idea

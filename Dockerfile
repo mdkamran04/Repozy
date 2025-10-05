@@ -5,16 +5,21 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy lock files and install dependencies
+# ----------------- CRITICAL FIX APPLIED HERE -----------------
+# Step 1: Copy Prisma schema FIRST for the 'postinstall' hook.
+# This prevents the "Prisma Schema not found" error during npm install.
+COPY prisma ./prisma
+
+# Step 2: Copy package files and install dependencies
 # This step is crucial for Docker layer caching optimization
 COPY package.json package-lock.json ./
 RUN npm install
+# -------------------------------------------------------------
 
 # Copy the rest of the application code
 COPY . .
 
-# Generate Prisma Client
-# This must happen before the 'next build'
+# Generate Prisma Client (explicit run, if postinstall didn't fully cover it)
 RUN npx prisma generate
 
 # Build the Next.js application
@@ -32,9 +37,6 @@ ENV PORT=3000
 
 # Set working directory
 WORKDIR /app
-
-# The Next.js standalone output feature is great for minimal images,
-# but since you're using 'npm start', we'll stick to a standard copy:
 
 # 1. Copy essential runtime files
 COPY --from=builder /app/public ./public
