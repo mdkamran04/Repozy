@@ -10,6 +10,9 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     
+    env:
+      DATABASE_URL: 'postgresql://ci_user:ci_pass@localhost:5432/ci_db_placeholder'
+    
     permissions:
       contents: read
       packages: write # Critical for pushing to GHCR
@@ -50,7 +53,7 @@ jobs:
         images: ghcr.io/${{ github.repository }}/repozy-app
         tags: |
           type=sha,format=long 
-          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }} 
+          type=raw,value=latest,enable=${{ github.ref == 'refs_heads_main' }} 
     
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
