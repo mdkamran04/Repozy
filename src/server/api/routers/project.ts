@@ -3,8 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { z } from "zod";
 import { clerkClient } from "@clerk/clerk-sdk-node";
 import { checkCredits, indexGithubRepo } from "@/lib/github-loader";
-import { check } from "prettier";
-import { github } from "react-syntax-highlighter/dist/esm/styles/hljs";
+
 
 export const projectRouter = createTRPCRouter({
   createProject: protectedProcedure
@@ -13,6 +12,7 @@ export const projectRouter = createTRPCRouter({
         name: z.string(),
         githubUrl: z.string(),
         githubToken: z.string().optional(),
+        geminiApiKey: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -22,7 +22,6 @@ export const projectRouter = createTRPCRouter({
       // Fetch full user from Clerk
       const clerkUser = await clerkClient.users.getUser(ctx.user.userId);
 
-      // Get primary email
       const primaryEmailId = clerkUser.primaryEmailAddressId;
       const primaryEmail = clerkUser.emailAddresses.find(e => e.id === primaryEmailId);
       const email = primaryEmail?.emailAddress;
@@ -47,6 +46,7 @@ export const projectRouter = createTRPCRouter({
           data: { id: ctx.user.userId },
         });
       }
+      
       const fileCount = await checkCredits(input.githubUrl, input.githubToken);
       if (user.credits < fileCount) {
         throw new Error("Not enough credits");
@@ -61,7 +61,7 @@ export const projectRouter = createTRPCRouter({
       });
 
 
-      await indexGithubRepo(project.id, input.githubUrl, input.githubToken);
+      await indexGithubRepo(project.id, input.githubUrl, input.githubToken, input.geminiApiKey);
       await pollCommits(project.id);
       await ctx.db.user.update({
         where: { id: user.id },

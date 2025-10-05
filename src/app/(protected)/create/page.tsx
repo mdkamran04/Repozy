@@ -4,29 +4,34 @@ import { Input } from "@/components/ui/input";
 import useRefetch from "@/hooks/use-refetch";
 import { api } from "@/trpc/react";
 import { Info } from "lucide-react";
-import { check } from "prettier";
 import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+
 
 type FormInput = {
   repoUrl: string;
   projectName: string;
   githubToken?: string;
+  geminiApiKey?: string;
 };
 const CreatePage = () => {
   const { register, handleSubmit, reset } = useForm<FormInput>();
   const createProject = api.project.createProject.useMutation();
   const checkCredits = api.project.checkCredits.useMutation();
   const refetch = useRefetch();
+
   function onSubmit(data: FormInput) {
+    const mutationData = {
+      githubUrl: data.repoUrl,
+      name: data.projectName,
+      githubToken: data.githubToken,
+      geminiApiKey: data.geminiApiKey,
+    };
+
     if (!!checkCredits.data) {
       createProject.mutate(
-        {
-          githubUrl: data.repoUrl,
-          name: data.projectName,
-          githubToken: data.githubToken,
-        },
+        mutationData,
         {
           onSuccess: () => {
             toast.success("Project Created Successfully");
@@ -82,6 +87,12 @@ const CreatePage = () => {
             <Input
               {...register("githubToken")}
               placeholder="GitHub Token (Optional)"
+            />
+            <div className="h-2"></div>
+            <Input
+              {...register("geminiApiKey")}
+              placeholder="Gemini API Key (Optional)"
+              type="password" // Use type="password" for sensitive inputs
             />
             {!!checkCredits.data && (
               <>

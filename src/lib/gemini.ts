@@ -1,25 +1,30 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import * as dotenv from "dotenv";
 import { Document } from "@langchain/core/documents";
-import { SourceCode } from "eslint";
 
-// Load environment variables
 dotenv.config();
 
-// Initialize the Google Generative AI client
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY as string);
+const getGenerativeAIClient = (userGeminiApiKey?: string) => {
+    // ➡️ Prioritize the user's key, fall back to the environment variable key
+    const apiKey = userGeminiApiKey || process.env.GEMINI_API_KEY;
 
-// Get the Gemini 1.5 flash model
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    if (!apiKey) {
+        throw new Error("Gemini API Key is missing. Please provide one.");
+    }
+
+    return new GoogleGenerativeAI(apiKey as string);
+};
 
 /**
  * Summarizes a Git diff using Gemini AI.
- * Mimics the old version: includes detailed instructions, diff metadata handling, and example comment style
  * @param diff The git diff text
+ * @param userGeminiApiKey Optional user-provided API key
  * @returns A concise summary of the diff
  */
-export const aiSummariseCommit = async (diff: string) => {
+export const aiSummariseCommit = async (diff: string, userGeminiApiKey?: string) => {
   try {
+    const genAI = getGenerativeAIClient(userGeminiApiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const response = await model.generateContent([
       `
 You are an expert programmer. Summarize the following git diff concisely.
@@ -51,9 +56,18 @@ ${diff}
   }
 };
 
-export async function summarizeCode(doc: Document) {
+/**
+ * Summarizes a code document using Gemini AI.
+ * @param doc The document containing the code content
+ * @param userGeminiApiKey Optional user-provided API key
+ * @returns A concise summary of the code file
+ */
+export async function summarizeCode(doc: Document, userGeminiApiKey?: string) {
   console.log("Getting summary for :", doc.metadata.source);
   try {
+    const genAI = getGenerativeAIClient(userGeminiApiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
     const code = doc.pageContent.slice(0, 10000);
     const response = await model.generateContent([
       `You are an expert senior software engineer who specializes in onboarding new junior software engineers onto projects . `,
@@ -67,15 +81,19 @@ export async function summarizeCode(doc: Document) {
     console.warn("AI summarization failed, returning empty summary:", err);
     return ""; // fallback so project creation won't fail
   }
-
-
 }
 
-export async function generateEmbedding(summary: string) {
+/**
+ * Generates an embedding for a summary using Gemini AI.
+ * @param summary The text summary to embed
+ * @param userGeminiApiKey Optional user-provided API key
+ * @returns An array of embedding values
+ */
+export async function generateEmbedding(summary: string, userGeminiApiKey?: string) {
+  const genAI = getGenerativeAIClient(userGeminiApiKey);
   const model = genAI.getGenerativeModel({
     model: "text-embedding-004"
   });
   const result = await model.embedContent(summary);
   return result.embedding.values;
 }
-

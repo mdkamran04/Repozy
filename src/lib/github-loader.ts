@@ -1,6 +1,6 @@
 import { GithubRepoLoader } from "@langchain/community/document_loaders/web/github";
 import { Document } from "@langchain/core/documents";
-import { summarizeCode, generateEmbedding } from "./gemini";
+import { summarizeCode, generateEmbedding } from "./gemini"; 
 import { db } from "@/server/db";
 import { Octokit } from "@octokit/rest";
 
@@ -112,10 +112,12 @@ export const loadGithubRepo = async (githubUrl: string, githubToken?: string) =>
     return doc;
 }
 
-const generateEmbeddings = async (docs: Document[]) => {
+
+const generateEmbeddings = async (docs: Document[], userGeminiApiKey?: string) => {
     return await Promise.all(docs.map(async (doc) => {
-        const summary = await summarizeCode(doc);
-        const embedding = await generateEmbedding(summary);
+        // Pass the key to the LLM functions
+        const summary = await summarizeCode(doc, userGeminiApiKey);
+        const embedding = await generateEmbedding(summary, userGeminiApiKey);
         return {
             summary,
             embedding,
@@ -125,7 +127,12 @@ const generateEmbeddings = async (docs: Document[]) => {
     }));
 }
 
-export const indexGithubRepo = async (projectId: string, githubUrl: string, githubToken?: string) => {
+export const indexGithubRepo = async (
+    projectId: string, 
+    githubUrl: string, 
+    githubToken?: string, 
+    userGeminiApiKey?: string
+) => {
     const rawDocs = await loadGithubRepo(githubUrl, githubToken);
 
     const filteredDocs = rawDocs.filter(doc => {
@@ -137,7 +144,7 @@ export const indexGithubRepo = async (projectId: string, githubUrl: string, gith
         return true;
     });
 
-    const allEmbeddings = await generateEmbeddings(filteredDocs);
+    const allEmbeddings = await generateEmbeddings(filteredDocs, userGeminiApiKey);
 
     await Promise.allSettled(allEmbeddings.map(async (embedding, index) => {
         console.log(`Processing ${index} of ${allEmbeddings.length}: `);
