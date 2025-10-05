@@ -18,7 +18,6 @@ const CodeReferences = ({ filesReferences }: Props) => {
   return (
     <div className="max-w-[70vw]">
       <Tabs value={tab} onValueChange={setTab} className="w-full">
-        {/* file tabs */}
         <div className="flex gap-2 overflow-x-auto scrollbar-none rounded-md bg-gray-200 p-1">
           {filesReferences.map((file) => (
             <button
@@ -36,14 +35,12 @@ const CodeReferences = ({ filesReferences }: Props) => {
           ))}
         </div>
 
-        {/* code area */}
         {filesReferences.map((file) => (
           <TabsContent
             key={file.fileName}
             value={file.fileName}
             className="max-h-[40vh] max-w-7xl rounded-md overflow-hidden"
           >
-            {/* Only show scrollbars when hovered */}
             <div className="h-full w-full overflow-hidden hover:overflow-auto rounded-md">
               <SyntaxHighlighter
                 language="typescript"

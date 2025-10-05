@@ -12,14 +12,10 @@ import useProject from "@/hooks/use-project";
 import Image from "next/image";
 import React from "react";
 import { askQuestion } from "./actions";
-import { set } from "date-fns";
 import { readStreamableValue } from "ai/rsc";
 import MDEditor from "@uiw/react-md-editor";
-import { Code } from "lucide-react";
 import CodeReferences from "./code-references";
-import { StreamableValue } from "ai/rsc";
 import { api } from "@/trpc/react";
-import { on } from "events";
 import { toast } from "sonner";
 import useRefetch from "@/hooks/use-refetch";
 

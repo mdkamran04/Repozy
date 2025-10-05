@@ -7,9 +7,7 @@ import MeetingCard from "../dashboard/meeting-card";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { on } from "events";
 import { toast } from "sonner";
-import { ref } from "firebase/storage";
 import useRefetch from "@/hooks/use-refetch";
 
 const MeetingsPage = () => {

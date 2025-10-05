@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import useProject from "@/hooks/use-project";
 import useRefetch from "@/hooks/use-refetch";
 import { api } from "@/trpc/react";
-import { ref } from "firebase/storage";
 import React from "react";
 import { toast } from "sonner";
 

@@ -15,24 +15,21 @@ const BillingPage = () => {
   const creditsToBuyAmount = creditsToBuy[0]!;
   const price = ((creditsToBuyAmount * 2) - 1).toFixed(0);
 
-  // 2. Add the Payment Handler function
   const handlePayment = async () => {
     setIsLoading(true);
     try {
-      // 2a. Call the Server Action to get the paymentSessionId
+     
       const orderData = await createCashfreeCheckoutSession(creditsToBuyAmount);
 
       if (orderData.success) {
-        // 2b. Load the Cashfree JS SDK
         const cashfree = await load({
           mode: 'sandbox', // IMPORTANT: Match this to your server's Cashfree.XEnvironment
         });
 
         if (cashfree) {
-          // 2c. Initiate the payment redirect
           cashfree.checkout({
             paymentSessionId: orderData.paymentSessionId,
-            redirectTarget: '_self', // Opens in the same window
+            redirectTarget: '_self', 
           });
         }
       } else {
@@ -76,7 +73,7 @@ const BillingPage = () => {
       ></Slider>
       <div className="h-4"></div>
       <Button 
-        onClick={handlePayment} // 👈 3. Attach the handler
+        onClick={handlePayment} 
         disabled={isLoading}    
       >
         {isLoading

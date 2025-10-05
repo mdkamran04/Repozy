@@ -1,6 +1,5 @@
 "use client";
 
-import { ref } from "firebase/storage";
 import React, { use } from "react";
 import { api, RouterOutputs } from "@/trpc/react";
 import { VideoIcon } from "lucide-react";

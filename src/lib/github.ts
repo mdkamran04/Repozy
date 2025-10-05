@@ -3,7 +3,6 @@ import { Octokit } from "@octokit/rest";
 import axios from "axios";
 import { aiSummariseCommit } from "./gemini";
 
-// ✅ Make sure you set GITHUB_TOKEN in your .env
 export const octokit = new Octokit({
   auth: process.env.GITHUB_TOKEN,
 });
@@ -16,7 +15,6 @@ type Response = {
   commitDate: string;
 };
 
-// Get latest commits from GitHub
 export const getCommitHashes = async (githubUrl: string): Promise<Response[]> => {
   const [owner, repo] = githubUrl.split("/").slice(-2);
 
@@ -44,7 +42,7 @@ export const getCommitHashes = async (githubUrl: string): Promise<Response[]> =>
   }));
 };
 
-// Poll commits and store in DB
+
 export const pollCommits = async (projectId: string) => {
   const { githubUrl } = await fetchProjectGithubUrl(projectId);
   const commitHashes = await getCommitHashes(githubUrl);
@@ -80,19 +78,19 @@ export const pollCommits = async (projectId: string) => {
   return unprocessedCommits;
 };
 
-// Get commit diff and summarise
+
 async function summariseCommit(githubUrl: string, commitHash: string) {
   const { data } = await axios.get(`${githubUrl}/commit/${commitHash}.diff`, {
     headers: {
       Accept: "application/vnd.github.v3.diff",
-      Authorization: `token ${process.env.GITHUB_TOKEN}`, // ✅ ensure auth
+      Authorization: `token ${process.env.GITHUB_TOKEN}`, 
     },
   });
 
   return (await aiSummariseCommit(data)) || "";
 }
 
-// Fetch GitHub URL of project
+
 async function fetchProjectGithubUrl(projectId: string) {
   const project = await db.project.findUnique({
     where: { id: projectId },
@@ -104,7 +102,6 @@ async function fetchProjectGithubUrl(projectId: string) {
   return { githubUrl: project.githubUrl };
 }
 
-// Filter commits not already in DB
 async function filterUnprocessedCommits(projectId: string, commitHashes: Response[]) {
   const processedCommits = await db.commit.findMany({
     where: { projectId },
