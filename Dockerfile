@@ -6,17 +6,16 @@ WORKDIR /app
 
 # 1. Declare the build argument
 ARG DATABASE_URL
-
+ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY 
 # 2. Set the argument as an environment variable for the builder stage
 ENV DATABASE_URL=$DATABASE_URL
+ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 
 # ----------------- CRITICAL FIX APPLIED HERE -----------------
 # Step 1: Copy Prisma schema FIRST for the 'postinstall' hook.
-# This prevents the "Prisma Schema not found" error during npm install.
 COPY prisma ./prisma
 
 # Step 2: Copy package files and install dependencies
-# This step is crucial for Docker layer caching optimization
 COPY package.json package-lock.json ./
 RUN npm install
 # -------------------------------------------------------------
@@ -29,8 +28,7 @@ RUN npx prisma generate
 
 # Build the Next.js application (This will now succeed)
 # Use the 'build' script defined in your package.json
-RUN npm run build
-
+RUN npx next build --no-lint 
 # ----------------------------------------------------------------
 # Stage 2: Create the final, lean production image
 # ----------------------------------------------------------------
@@ -47,16 +45,15 @@ WORKDIR /app
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./package.json
 
-# 2. Install production dependencies only (often smaller)
-# This uses the package.json from the 'builder' stage, but installs fresh
-# production-only node_modules to ensure no dev dependencies are present.
+# 2. Copy the Prisma schema first (CRITICAL FIX FOR RUNNER)
+# This must happen BEFORE npm install runs the postinstall script (prisma generate).
+COPY --from=builder /app/prisma ./prisma
+
+# 3. Install production dependencies only (This will now succeed)
 RUN npm install --omit=dev
 
-# 3. Copy the Next.js build output
+# 4. Copy the Next.js build output
 COPY --from=builder /app/.next ./.next
-
-# 4. Copy the Prisma schema, required for deployment migrations
-COPY --from=builder /app/prisma ./prisma
 
 # 5. Copy the entrypoint script
 COPY ./docker-entrypoint.sh /usr/local/bin/

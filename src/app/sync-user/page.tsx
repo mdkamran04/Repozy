@@ -1,11 +1,11 @@
+export const dynamic = 'force-dynamic';
 import { redirect } from "next/navigation";
 import { db } from "@/server/db";
 import { auth, clerkClient } from "@clerk/nextjs/server";
-import useRefetch from "@/hooks/use-refetch";
+
 
 export default async function SyncUser() {
   console.log("SyncUser: start");
-  const refetch = useRefetch();
 
   const { userId } = await auth();
   console.log("SyncUser: auth() returned userId:", userId);
@@ -49,7 +49,7 @@ export default async function SyncUser() {
     console.log("SyncUser: upsert result:", result);
 
     return redirect("/dashboard");
-    refetch();
+    
   } catch (err) {
     if (
       err &&
