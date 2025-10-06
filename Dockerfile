@@ -2,8 +2,13 @@
 # Stage 1: Build the Next.js application
 # ----------------------------------------------------------------
 FROM node:20-alpine AS builder
-
 WORKDIR /app
+
+# 1. Declare the build argument
+ARG DATABASE_URL
+
+# 2. Set the argument as an environment variable for the builder stage
+ENV DATABASE_URL=$DATABASE_URL
 
 # ----------------- CRITICAL FIX APPLIED HERE -----------------
 # Step 1: Copy Prisma schema FIRST for the 'postinstall' hook.
@@ -22,7 +27,7 @@ COPY . .
 # Generate Prisma Client (explicit run, if postinstall didn't fully cover it)
 RUN npx prisma generate
 
-# Build the Next.js application
+# Build the Next.js application (This will now succeed)
 # Use the 'build' script defined in your package.json
 RUN npm run build
 

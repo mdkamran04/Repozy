@@ -2,69 +2,67 @@ name: CI/CD Docker Build (Full CD to GHCR using CR_PAT)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    
-    # CRITICAL FIX 1: Provide placeholder DATABASE_URL for validation
     env:
-      DATABASE_URL: 'postgresql://ci_user:ci_pass@localhost:5432/ci_db_placeholder'
-    
+      DATABASE_URL: "postgresql://ci_user:ci_pass@localhost:5432/ci_db_placeholder"
+
     permissions:
       contents: read
-      packages: write # Critical for pushing to GHCR
-      
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      packages: write
 
-    # --- Pre-build Checks ---
-    - name: Set up Node.js for checks
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        cache: 'npm'
-    
-    - name: Install Dependencies (Skipping checks due to TS errors)
-      # We are commenting out all stability checks to ensure the Docker build proceeds.
-      run: |
-        npm install
-        # npm run lint # Bypassed due to earlier ESLint config error
-        # npm run typecheck # Bypassed due to new TS compilation errors
-        
-    # --- Docker Build & Push ---
-    
-    # 1. Login to GHCR using your user-defined PAT (CR_PAT)
-    - name: Docker login to GHCR
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.actor }}
-        password: ${{ secrets.CR_PAT }} # Using your confirmed secret
-    
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      
-    - name: Define image name and tag
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ghcr.io/${{ github.repository }}/repozy-app
-        tags: |
-          type=sha,format=long 
-          # Corrected typo from 'refs_heads_main' to 'refs/heads/main'
-          type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }} 
-    
-    # 3. Build and push the Docker image
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        file: ./Dockerfile
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # --- Pre-build Checks ---
+      - name: Set up Node.js for checks
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Install Dependencies 
+        run: |
+          npm install
+          npm run lint 
+          npm run typecheck 
+
+      # --- Docker Build & Push ---
+
+      # 1. Login to GHCR using your user-defined PAT (CR_PAT)
+      - name: Docker login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }} # Using your confirmed secret
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Define image name and tag
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}/repozy-app
+          tags: |
+            type=sha,format=long 
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      # 3. Build and push the Docker image
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          file: ./Dockerfile
+          build-args: |
+            DATABASE_URL=${{ env.DATABASE_URL }}
