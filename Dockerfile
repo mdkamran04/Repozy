@@ -11,11 +11,9 @@ ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 ENV DATABASE_URL=$DATABASE_URL
 ENV NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=$NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 
-# ----------------- CRITICAL FIX APPLIED HERE -----------------
-# Step 1: Copy Prisma schema FIRST for the 'postinstall' hook.
+
 COPY prisma ./prisma
 
-# Step 2: Copy package files and install dependencies
 COPY package.json package-lock.json ./
 RUN npm install
 # -------------------------------------------------------------
@@ -29,6 +27,8 @@ RUN npx prisma generate
 # Build the Next.js application (This will now succeed)
 # Use the 'build' script defined in your package.json
 RUN npx next build --no-lint 
+
+
 # ----------------------------------------------------------------
 # Stage 2: Create the final, lean production image
 # ----------------------------------------------------------------
