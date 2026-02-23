@@ -1,11 +1,21 @@
 import { PrismaClient } from "@prisma/client";
-
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { Pool } from "@neondatabase/serverless";
 import { env } from "@/env";
+
+const pool = new Pool({
+  connectionString: env.DATABASE_URL,
+});
+
+const adapter = new PrismaNeon(pool as any);
 
 const createPrismaClient = () =>
   new PrismaClient({
+    adapter,
     log:
-      env.NODE_ENV === "development" ? ["query", "error", "warn",] : ["error",],
+      env.NODE_ENV === "development"
+        ? ["query", "error", "warn"]
+        : ["error"],
   });
 
 const globalForPrisma = globalThis as unknown as {
