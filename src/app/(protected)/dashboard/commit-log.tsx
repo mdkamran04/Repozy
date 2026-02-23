@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import useProject from "@/hooks/use-project";
 import { api } from "@/trpc/react";
 import { cn } from "@/lib/utils";
@@ -8,13 +8,41 @@ import { ExternalLink } from "lucide-react";
 
 const CommitLog = () => {
   const { projectId, project } = useProject();
-  const { data: commits } = api.project.getCommits.useQuery({
-    projectId: projectId!,
-  });
+  const [isMounted, setIsMounted] = useState(false);
+  
+  const { data: commits } = api.project.getCommits.useQuery(
+    { projectId: projectId! },
+    { enabled: !!projectId && isMounted } // Only fetch when projectId exists and component is mounted
+  );
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Don't render anything until mounted (prevents hydration mismatch)
+  if (!isMounted) {
+    return null;
+  }
+
+  // Don't render anything if no project selected
+  if (!projectId) {
+    return null;
+  }
+
+  // Show empty message if no commits
+  if (!commits || commits.length === 0) {
+    return (
+      <div className="rounded-md border border-gray-200 bg-white p-6 text-center">
+        <p className="text-sm text-gray-500">No commits yet</p>
+      </div>
+    );
+  }
+
   return (
     <>
       <ul className="space-y-6">
-        {commits?.map((commit, commitIdx) => (
+        {commits.map((commit, commitIdx) => (
           <li key={commit.id} className="relative flex gap-4">
             <div
               className={cn(

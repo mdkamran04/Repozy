@@ -81,9 +81,22 @@ export const projectRouter = createTRPCRouter({
   }),
   getCommits: protectedProcedure.input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {
+      // Verify user has access to this project
+      const userProject = await ctx.db.userToProject.findFirst({
+        where: {
+          projectId: input.projectId,
+          userId: ctx.user.userId!,
+        },
+      });
+
+      if (!userProject) {
+        throw new Error("Unauthorized: You don't have access to this project");
+      }
+
       pollCommits(input.projectId).then().catch(console.error);
       return await ctx.db.commit.findMany({
-        where: { projectId: input.projectId }
+        where: { projectId: input.projectId },
+        orderBy: { commitDate: "desc" },
       });
     }),
 
@@ -109,6 +122,18 @@ export const projectRouter = createTRPCRouter({
   getQuestions: protectedProcedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {
+      // Verify user has access to this project
+      const userProject = await ctx.db.userToProject.findFirst({
+        where: {
+          projectId: input.projectId,
+          userId: ctx.user.userId!,
+        },
+      });
+
+      if (!userProject) {
+        throw new Error("Unauthorized: You don't have access to this project");
+      }
+
       return await ctx.db.question.findMany({
         where: { projectId: input.projectId },
         include: { user: true },
@@ -136,10 +161,21 @@ export const projectRouter = createTRPCRouter({
   getMeetings: protectedProcedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {
+      // Verify user has access to this project
+      const userProject = await ctx.db.userToProject.findFirst({
+        where: {
+          projectId: input.projectId,
+          userId: ctx.user.userId!,
+        },
+      });
+
+      if (!userProject) {
+        throw new Error("Unauthorized: You don't have access to this project");
+      }
+
       return await ctx.db.meeting.findMany({
         where: { projectId: input.projectId },
         include: { issues: true },
-
       });
     }),
   deleteMeeting: protectedProcedure
@@ -170,6 +206,18 @@ export const projectRouter = createTRPCRouter({
   getTeamMembers: protectedProcedure
     .input(z.object({ projectId: z.string() }))
     .query(async ({ ctx, input }) => {
+      // Verify user has access to this project
+      const userProject = await ctx.db.userToProject.findFirst({
+        where: {
+          projectId: input.projectId,
+          userId: ctx.user.userId!,
+        },
+      });
+
+      if (!userProject) {
+        throw new Error("Unauthorized: You don't have access to this project");
+      }
+
       return await ctx.db.userToProject.findMany({
         where: { projectId: input.projectId },
         include: { user: true },

@@ -10,6 +10,12 @@ const ArchiveButton = () => {
   const archiveProject = api.project.archiveProject.useMutation();
   const { projectId } = useProject();
   const refetch = useRefetch();
+  
+  // Don't render if no project selected
+  if (!projectId) {
+    return null;
+  }
+  
   return (
     <Button
       disabled={archiveProject.isPending}

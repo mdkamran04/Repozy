@@ -24,6 +24,11 @@ const InviteButton = () => {
     }
   }, [projectId]);
 
+  // Don't render if no project selected
+  if (!projectId) {
+    return null;
+  }
+
   return (
     <>
       <Dialog open={open} onOpenChange={setOpen}>
