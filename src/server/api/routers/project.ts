@@ -28,7 +28,7 @@ export const projectRouter = createTRPCRouter({
 
       if (!email) throw new Error("User email not found");
 
-      // ✅ Find user by email first to avoid unique constraint errors
+      // Find user by email first to avoid unique constraint errors
       let user = await ctx.db.user.findUnique({ where: { emailAddress: email } });
 
       if (!user) {

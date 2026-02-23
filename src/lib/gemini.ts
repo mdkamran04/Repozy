@@ -5,7 +5,7 @@ import { Document } from "@langchain/core/documents";
 dotenv.config();
 
 const getGenerativeAIClient = (userGeminiApiKey?: string) => {
-    // ➡️ Prioritize the user's key, fall back to the environment variable key
+    // Prioritize the user's key, fall back to the environment variable key
     const apiKey = userGeminiApiKey || process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -37,11 +37,11 @@ Reminders about git diff:
   index aadf691..bfef603 100644
 - Example summary comments:
 '''
-⭐ Raised the amount of returned recordings from '10 to '100 [packages/server/recordings_api.tsx], [packages/server/constants.tsx]
-⭐ Fixed a typo in the github action name [.github/workflows/gpt-commit-summarizer.yml]
-⭐ Moved the 'octokit' initialization to a separate file [src/octokit.ts],[src/index.ts]
-⭐ Added an OpenAI API for completions [packages/utils/apis/openai.ts]
-⭐ Lowered numeric tolerance for test files
+* Raised the amount of returned recordings from '10 to '100 [packages/server/recordings_api.tsx], [packages/server/constants.tsx]
+* Fixed a typo in the github action name [.github/workflows/gpt-commit-summarizer.yml]
+* Moved the 'octokit' initialization to a separate file [src/octokit.ts],[src/index.ts]
+* Added an OpenAI API for completions [packages/utils/apis/openai.ts]
+* Lowered numeric tolerance for test files
 '''
 Do NOT include the example text in your summary. Limit summary to the changes in the diff below:
 
@@ -97,3 +97,4 @@ export async function generateEmbedding(summary: string, userGeminiApiKey?: stri
   const result = await model.embedContent(summary);
   return result.embedding.values;
 }
+ 

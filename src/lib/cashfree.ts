@@ -45,7 +45,7 @@ export async function createCashfreeCheckoutSession(credits: number) {
     order_meta: {
       return_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?order_id={order_id}&order_status={order_status}`,
       notify_url: `${process.env.NEXT_PUBLIC_URL}/api/webhook/cashfree`,
-      // ✅ FIX: Use a redundant custom field in order_meta for better webhook reliability
+      // FIX: Use a redundant custom field in order_meta for better webhook reliability
       custom_data: metadataJsonString, 
     },
     // Keep order_note as well, as this is the standard location

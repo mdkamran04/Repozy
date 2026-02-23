@@ -123,7 +123,7 @@ export async function POST(req: NextRequest) {
 
   // Dev bypass: only if explicit env var set
   if (!signature && ALLOW_WEBHOOK_BYPASS) {
-    console.warn(`⚠️ ALLOW_WEBHOOK_BYPASS enabled: skipping signature check for ${webhookType}`);
+    console.warn(`WARNING: ALLOW_WEBHOOK_BYPASS enabled: skipping signature check for ${webhookType}`);
   } else if (!signature) {
     console.error(`Missing x-cf-signature for required webhook type: ${webhookType}.`);
     return NextResponse.json({ message: "Missing Signature" }, { status: 400 });
@@ -230,12 +230,12 @@ export async function POST(req: NextRequest) {
             create: { orderId, isFulfilled: true, fulfilledAt: new Date(), userId },
             update: { isFulfilled: true, fulfilledAt: new Date() },
           });
-          console.log(`✅ Credits updated: +${credits} for user ${userId} [FULFILLMENT COMPLETE for order ${orderId}]`);
+          console.log(`[SUCCESS] Credits updated: +${credits} for user ${userId} [FULFILLMENT COMPLETE for order ${orderId}]`);
         } else {
           console.log(`Order ${orderId} already fulfilled; skipping credit increment.`);
         }
       } else {
-        console.warn(`⚠️ Payment status "${paymentStatus}" did not match success criteria. Fulfillment skipped.`);
+        console.warn(`WARNING: Payment status "${paymentStatus}" did not match success criteria. Fulfillment skipped.`);
       }
     });
 

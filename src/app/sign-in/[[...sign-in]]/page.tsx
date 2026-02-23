@@ -3,8 +3,11 @@ import { SignIn } from "@clerk/nextjs";
 
 export default function Page() {
   return (
-    <SignIn
-      redirectUrl="/sync-user"
-    />
+    <div className="flex min-h-screen items-center justify-center">
+      <SignIn
+        forceRedirectUrl="/sync-user"
+        signUpUrl="/sign-up"
+      />
+    </div>
   );
 }

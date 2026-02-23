@@ -1,13 +1,33 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { UserButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import React from "react";
 import { AppSidebar } from "./app-sidebar";
+import { db } from "@/server/db";
 
 type Props = {
   children: React.ReactNode;
 };
 
-const SidebarLayout = ({ children }: Props) => {
+const SidebarLayout = async ({ children }: Props) => {
+  const { userId } = await auth();
+  
+  if (!userId) {
+    return redirect("/sign-in");
+  }
+
+  // Check if user exists in database and is synced
+  const dbUser = await db.user.findUnique({
+    where: { id: userId },
+    select: { id: true, isSynced: true }
+  });
+
+  // If user doesn't exist or isn't synced, redirect to sync-user
+  if (!dbUser || !dbUser.isSynced) {
+    return redirect("/sync-user");
+  }
+
   return (
     <SidebarProvider>
       <AppSidebar />

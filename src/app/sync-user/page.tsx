@@ -29,6 +29,7 @@ export default async function SyncUser() {
     const result = await db.user.upsert({
       where: { emailAddress: email },
       update: {
+        id: userId, // Update the id to match Clerk's userId
         imageUrl: user.imageUrl ?? "",
         firstName: user.firstName ?? "",
         lastName: user.lastName ?? "",
@@ -41,7 +42,6 @@ export default async function SyncUser() {
         imageUrl: user.imageUrl ?? "",
         firstName: user.firstName ?? "",
         lastName: user.lastName ?? "",
-
         credits: 150,
         isSynced: true,
       },
