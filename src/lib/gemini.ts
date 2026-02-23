@@ -83,6 +83,9 @@ export async function summarizeCode(doc: Document, userGeminiApiKey?: string) {
   }
 }
 
+const DEFAULT_EMBEDDING_MODEL = process.env.GEMINI_EMBEDDING_MODEL || "embedding-001";
+const FALLBACK_EMBEDDING_DIMENSIONS = 768;
+
 /**
  * Generates an embedding for a summary using Gemini AI.
  * @param summary The text summary to embed
@@ -90,11 +93,16 @@ export async function summarizeCode(doc: Document, userGeminiApiKey?: string) {
  * @returns An array of embedding values
  */
 export async function generateEmbedding(summary: string, userGeminiApiKey?: string) {
-  const genAI = getGenerativeAIClient(userGeminiApiKey);
-  const model = genAI.getGenerativeModel({
-    model: "text-embedding-004"
-  });
-  const result = await model.embedContent(summary);
-  return result.embedding.values;
+  try {
+    const genAI = getGenerativeAIClient(userGeminiApiKey);
+    const model = genAI.getGenerativeModel({
+      model: DEFAULT_EMBEDDING_MODEL,
+    });
+    const result = await model.embedContent(summary);
+    return result.embedding.values;
+  } catch (err) {
+    console.warn("Embedding generation failed, falling back to zeros:", err);
+    return new Array(FALLBACK_EMBEDDING_DIMENSIONS).fill(0);
+  }
 }
  
