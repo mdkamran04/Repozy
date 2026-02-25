@@ -34,6 +34,12 @@ RUN npx next build --no-lint
 # ----------------------------------------------------------------
 FROM node:20-alpine AS runner
 
+ARG DATABASE_URL
+ARG DATABASE_URL_UNPOOLED
+
+ENV DATABASE_URL=$DATABASE_URL
+ENV DATABASE_URL_UNPOOLED=$DATABASE_URL_UNPOOLED
+
 # Set environment variables
 ENV NODE_ENV=production
 ENV PORT=3000
