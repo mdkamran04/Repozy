@@ -51,22 +51,29 @@ export const projectRouter = createTRPCRouter({
       if (user.credits < fileCount) {
         throw new Error("Not enough credits");
       }
-      // Create project
-      const project = await ctx.db.project.create({
-        data: {
-          githubUrl: input.githubUrl,
-          name: input.name,
-          userToProjects: { create: { userId: user.id } },
-        },
+
+      const project = await ctx.db.$transaction(async (tx) => {
+        const createdProject = await tx.project.create({
+          data: {
+            githubUrl: input.githubUrl,
+            name: input.name,
+            userToProjects: { create: { userId: user.id } },
+          },
+        });
+
+        await tx.user.update({
+          where: { id: user.id },
+          data: { credits: { decrement: fileCount } },
+        });
+
+        return createdProject;
       });
 
-
-      await indexGithubRepo(project.id, input.githubUrl, input.githubToken, input.geminiApiKey);
-      await pollCommits(project.id);
-      await ctx.db.user.update({
-        where: { id: user.id },
-        data: { credits: { decrement: fileCount } }, 
-      });
+      indexGithubRepo(project.id, input.githubUrl, input.githubToken, input.geminiApiKey)
+        .then(() => pollCommits(project.id))
+        .catch((err) => {
+          console.error("Project indexing failed:", err);
+        });
 
       return project;
     }),
