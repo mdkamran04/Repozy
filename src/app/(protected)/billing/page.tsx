@@ -8,6 +8,7 @@ import { createCashfreeCheckoutSession } from "@/lib/cashfree";
 import { load } from "@cashfreepayments/cashfree-js"; 
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { TransactionHistory } from "@/components/transaction-history";
 
 const BillingPage = () => {
   const { data: user, refetch } = api.project.getMyCredits.useQuery();
@@ -139,6 +140,11 @@ const BillingPage = () => {
           ? "Processing Payment..."
           : `Buy ${creditsToBuyAmount} credits for ₹${price}/-`}
       </Button>
+      <div className="h-8"></div>
+      <div className="border-t pt-8">
+        <h2 className="text-lg font-semibold mb-4">Transaction History</h2>
+        <TransactionHistory />
+      </div>
     </div>
   );
 };

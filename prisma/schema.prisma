@@ -37,6 +37,7 @@ model Project {
   githubUrl String
 
   indexingProgress Int      @default(0)
+  creditsUsed      Int      @default(0)
   deletedAt        DateTime?
 
   userToProjects       UserToProject[]

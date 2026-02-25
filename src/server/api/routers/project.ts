@@ -57,6 +57,7 @@ export const projectRouter = createTRPCRouter({
           data: {
             githubUrl: input.githubUrl,
             name: input.name,
+            creditsUsed: fileCount,
             userToProjects: { create: { userId: user.id } },
           },
         });
@@ -248,7 +249,64 @@ export const projectRouter = createTRPCRouter({
       });
       return { fileCount, userCredits: userCredits?.credits || 0 };
 
-    })
+    }),
+
+  getTransactionHistory: protectedProcedure
+    .query(async ({ ctx }) => {
+      const userId = ctx.user.userId!;
+
+      // Get credit purchases
+      const purchases = await ctx.db.cashfreeTransaction.findMany({
+        where: { userId, status: "SUCCESS" },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          credits: true,
+          createdAt: true,
+          status: true,
+        },
+      });
+
+      // Get projects created (credits spent)
+      const projects = await ctx.db.project.findMany({
+        where: {
+          userToProjects: { some: { userId } },
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          name: true,
+          createdAt: true,
+          creditsUsed: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      // Map to transaction format
+      const transactions = [
+        ...purchases.map((p) => ({
+          id: p.id,
+          type: "PURCHASE" as const,
+          amount: p.credits,
+          description: `Credits purchased`,
+          date: p.createdAt,
+          projectName: null as string | null,
+        })),
+        ...projects
+          .filter((p) => p.creditsUsed > 0) // Only show projects where credits were actually spent
+          .map((p) => ({
+            id: p.id,
+            type: "SPENT" as const,
+            amount: p.creditsUsed,
+            description: `Credits used for project indexing`,
+            date: p.createdAt,
+            projectName: p.name,
+          })),
+      ];
+
+      // Sort by date descending
+      return transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
+    }),
 
 
 });
