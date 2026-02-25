@@ -87,7 +87,55 @@ const DEFAULT_EMBEDDING_MODEL = process.env.GEMINI_EMBEDDING_MODEL || "embedding
 const FALLBACK_EMBEDDING_DIMENSIONS = 768;
 
 /**
+ * Generates a deterministic mock embedding for testing/fallback
+ * Uses a simple hash-based approach to create embeddings
+ */
+export function generateMockEmbedding(text: string): number[] {
+    const embedding = new Array(FALLBACK_EMBEDDING_DIMENSIONS).fill(0);
+    
+    // Simple hash function to generate deterministic values
+    for (let i = 0; i < text.length; i++) {
+        const charCode = text.charCodeAt(i);
+        const index = (charCode * (i + 1)) % FALLBACK_EMBEDDING_DIMENSIONS;
+        embedding[index] = (embedding[index] + charCode / 1000) % 1;
+    }
+    
+    // Normalize the vector
+    const magnitude = Math.sqrt(embedding.reduce((sum, val) => sum + val * val, 0));
+    if (magnitude > 0) {
+        for (let i = 0; i < embedding.length; i++) {
+            embedding[i] = embedding[i] / magnitude;
+        }
+    }
+    
+    return embedding;
+}
+
+/**
+ * Attempts to get an available embedding model from Gemini AI
+ */
+async function getEmbeddingModel(genAI: GoogleGenerativeAI) {
+    const models = ["text-embedding-004", "embedding-001"];
+    
+    for (const modelName of models) {
+        try {
+            const model = genAI.getGenerativeModel({ model: modelName });
+            // Try a test embedding to verify the model works
+            await model.embedContent("test");
+            console.log(`Using embedding model: ${modelName}`);
+            return model;
+        } catch (err) {
+            console.warn(`Model ${modelName} not available:`, err);
+            continue;
+        }
+    }
+    
+    throw new Error("No embedding models available");
+}
+
+/**
  * Generates an embedding for a summary using Gemini AI.
+ * Falls back to mock embeddings if real models fail.
  * @param summary The text summary to embed
  * @param userGeminiApiKey Optional user-provided API key
  * @returns An array of embedding values
@@ -95,14 +143,12 @@ const FALLBACK_EMBEDDING_DIMENSIONS = 768;
 export async function generateEmbedding(summary: string, userGeminiApiKey?: string) {
   try {
     const genAI = getGenerativeAIClient(userGeminiApiKey);
-    const model = genAI.getGenerativeModel({
-      model: DEFAULT_EMBEDDING_MODEL,
-    });
+    const model = await getEmbeddingModel(genAI);
     const result = await model.embedContent(summary);
     return result.embedding.values;
   } catch (err) {
-    console.warn("Embedding generation failed, falling back to zeros:", err);
-    return new Array(FALLBACK_EMBEDDING_DIMENSIONS).fill(0);
+    console.warn("Real embedding models unavailable. Using mock embeddings.", err);
+    return generateMockEmbedding(summary);
   }
 }
  

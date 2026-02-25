@@ -4,9 +4,11 @@ import { Input } from "@/components/ui/input";
 import useRefetch from "@/hooks/use-refetch";
 import { api } from "@/trpc/react";
 import { Info } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useIndexingProgress } from "@/hooks/use-indexing-progress";
+import { ProjectIndexingLoader } from "@/components/project-indexing-loader";
 
 
 type FormInput = {
@@ -20,6 +22,8 @@ const CreatePage = () => {
   const createProject = api.project.createProject.useMutation();
   const checkCredits = api.project.checkCredits.useMutation();
   const refetch = useRefetch();
+  const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+  const { progress, isIndexing } = useIndexingProgress(createdProjectId);
 
   function onSubmit(data: FormInput) {
     const mutationData = {
@@ -33,8 +37,9 @@ const CreatePage = () => {
       createProject.mutate(
         mutationData,
         {
-          onSuccess: () => {
+          onSuccess: (data) => {
             toast.success("Project Created Successfully");
+            setCreatedProjectId(data.id);
             refetch();
             reset();
           },
@@ -60,7 +65,12 @@ const CreatePage = () => {
   return (
     <div className="flex h-full items-center justify-center gap-12">
       <img src="/undraw_github.jpg" className="h-56 w-auto" />
-      <div>
+      <div className="w-full max-w-md">
+        {createdProjectId && (
+          <div className="mb-4">
+            <ProjectIndexingLoader progress={progress} isIndexing={isIndexing} />
+          </div>
+        )}
         <div>
           <h1 className="text-2xl font-semibold">
             Link your GitHub repository

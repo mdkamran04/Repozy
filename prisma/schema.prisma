@@ -6,7 +6,7 @@ generator client {
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  directUrl  = env("DATABASE_URL_UNPOOLED")
+  directUrl = env("DATABASE_URL_UNPOOLED")
   extensions = [vector]
 }
 
@@ -36,7 +36,8 @@ model Project {
   name      String
   githubUrl String
 
-  deletedAt DateTime?
+  indexingProgress Int      @default(0)
+  deletedAt        DateTime?
 
   userToProjects       UserToProject[]
   commits              Commit[]
