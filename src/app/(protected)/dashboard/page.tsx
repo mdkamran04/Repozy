@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 import useProject from "@/hooks/use-project";
 import { ExternalLink, Github } from "lucide-react";
@@ -17,12 +17,17 @@ import { ProjectIndexingLoader } from "@/components/project-indexing-loader";
 const DashboardPage = () => {
   const { project } = useProject();
   const { progress, isIndexing } = useIndexingProgress(project?.id ?? null);
+  const [showIndexing, setShowIndexing] = useState(true);
 
   return (
     <div>
-      {project && (
+      {project && showIndexing && (
         <div className="mb-4">
-          <ProjectIndexingLoader progress={progress} isIndexing={isIndexing} />
+          <ProjectIndexingLoader 
+            progress={progress} 
+            isIndexing={isIndexing}
+            onClose={() => setShowIndexing(false)}
+          />
         </div>
       )}
       <div className="flex flex-wrap items-center justify-between gap-y-4">

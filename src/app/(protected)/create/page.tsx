@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import useRefetch from "@/hooks/use-refetch";
 import { api } from "@/trpc/react";
 import { Info } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useIndexingProgress } from "@/hooks/use-indexing-progress";
@@ -18,12 +18,21 @@ type FormInput = {
   geminiApiKey?: string;
 };
 const CreatePage = () => {
-  const { register, handleSubmit, reset } = useForm<FormInput>();
+  const { register, handleSubmit, reset, watch } = useForm<FormInput>();
   const createProject = api.project.createProject.useMutation();
   const checkCredits = api.project.checkCredits.useMutation();
   const refetch = useRefetch();
   const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
+  const [showIndexing, setShowIndexing] = useState(true);
   const { progress, isIndexing } = useIndexingProgress(createdProjectId);
+
+  // Watch for changes to repoUrl and reset credits check
+  const repoUrl = watch("repoUrl");
+  useEffect(() => {
+    if (checkCredits.data) {
+      checkCredits.reset();
+    }
+  }, [repoUrl]);
 
   function onSubmit(data: FormInput) {
     const mutationData = {
@@ -40,6 +49,7 @@ const CreatePage = () => {
           onSuccess: (data) => {
             toast.success("Project Created Successfully");
             setCreatedProjectId(data.id);
+            setShowIndexing(true); // Show indexing progress
             refetch();
             reset();
           },
@@ -66,9 +76,13 @@ const CreatePage = () => {
     <div className="flex h-full items-center justify-center gap-12">
       <img src="/undraw_github.jpg" className="h-56 w-auto" />
       <div className="w-full max-w-md">
-        {createdProjectId && (
+        {createdProjectId && showIndexing && (
           <div className="mb-4">
-            <ProjectIndexingLoader progress={progress} isIndexing={isIndexing} />
+            <ProjectIndexingLoader 
+              progress={progress} 
+              isIndexing={isIndexing}
+              onClose={() => setShowIndexing(false)}
+            />
           </div>
         )}
         <div>
