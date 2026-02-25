@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useIndexingProgress } from "@/hooks/use-indexing-progress";
 import { ProjectIndexingLoader } from "@/components/project-indexing-loader";
+import Link from "next/link";
 
 
 type FormInput = {
@@ -21,6 +22,7 @@ const CreatePage = () => {
   const { register, handleSubmit, reset, watch } = useForm<FormInput>();
   const createProject = api.project.createProject.useMutation();
   const checkCredits = api.project.checkCredits.useMutation();
+  const { data: keyStatus } = api.project.getUserApiKeysStatus.useQuery();
   const refetch = useRefetch();
   const [createdProjectId, setCreatedProjectId] = useState<string | null>(null);
   const [showIndexing, setShowIndexing] = useState(true);
@@ -94,6 +96,23 @@ const CreatePage = () => {
           </p>
         </div>
         <div className="h-4"></div>
+        <div className="rounded-md bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 p-3 mb-4">
+          <p className="text-sm text-blue-800 dark:text-blue-200">
+            💡 <strong>Tip:</strong> You have{" "}
+            {keyStatus?.hasGeminiKey && keyStatus?.hasGithubToken
+              ? "both API keys"
+              : keyStatus?.hasGeminiKey
+                ? "Gemini key"
+                : keyStatus?.hasGithubToken
+                  ? "GitHub token"
+                  : "no API keys"}{" "}
+            saved in{" "}
+            <Link href="/settings" className="underline font-semibold hover:text-blue-900 dark:hover:text-blue-100">
+              Settings
+            </Link>
+            . You can optionally provide keys below to override them.
+          </p>
+        </div>
         <div>
           <form onSubmit={handleSubmit(onSubmit)}>
             <Input
@@ -110,13 +129,13 @@ const CreatePage = () => {
             <div className="h-2"></div>
             <Input
               {...register("githubToken")}
-              placeholder="GitHub Token (Optional)"
+              placeholder="GitHub Token (Optional - uses saved key if available)"
             />
             <div className="h-2"></div>
             <Input
               {...register("geminiApiKey")}
-              placeholder="Gemini API Key (Optional)"
-              type="password" // Use type="password" for sensitive inputs
+              placeholder="Gemini API Key (Optional - uses saved key if available)"
+              type="password"
             />
             {!!checkCredits.data && (
               <>
