@@ -3,17 +3,72 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { api } from "@/trpc/react";
 import { Info } from "lucide-react";
-import React, { useState } from "react"; 
+import React, { useState, useEffect, useRef } from "react"; 
 import { createCashfreeCheckoutSession } from "@/lib/cashfree"; 
 import { load } from "@cashfreepayments/cashfree-js"; 
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
+import { TransactionHistory } from "@/components/transaction-history";
 
 const BillingPage = () => {
-  const { data: user } = api.project.getMyCredits.useQuery();
+  const { data: user, refetch } = api.project.getMyCredits.useQuery();
+  const utils = api.useUtils();
   const [creditsToBuy, setCreditsToBuy] = React.useState<number[]>([100]);
   const [isLoading, setIsLoading] = useState(false); 
+  const [isVerifying, setIsVerifying] = useState(false);
+  const searchParams = useSearchParams();
+  const verificationAttemptedRef = useRef(false);
 
   const creditsToBuyAmount = creditsToBuy[0]!;
   const price = ((creditsToBuyAmount * 2) - 1).toFixed(0);
+
+  // Handle return from Cashfree payment
+  useEffect(() => {
+    const orderId = searchParams.get("order_id");
+    const orderStatus = searchParams.get("order_status");
+
+    // Prevent multiple verification attempts
+    if (orderId && orderStatus && !verificationAttemptedRef.current) {
+      verificationAttemptedRef.current = true;
+      
+      const verifyPayment = async () => {
+        setIsVerifying(true);
+        try {
+          const response = await fetch("/api/verify-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId }),
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            toast.success(
+              data.alreadyProcessed 
+                ? "Payment already processed!" 
+                : `Payment successful! ${data.credits} credits added.`
+            );
+            
+            // Invalidate and refetch to ensure fresh data
+            await utils.project.getMyCredits.invalidate();
+            await new Promise(resolve => setTimeout(resolve, 500)); // Small delay for DB to settle
+            await refetch();
+          } else {
+            toast.error(data.message || "Payment verification failed");
+          }
+        } catch (error) {
+          console.error("Payment verification error:", error);
+          toast.error("Failed to verify payment. Please contact support.");
+        } finally {
+          setIsVerifying(false);
+          // Clean up URL params after verification
+          window.history.replaceState({}, "", "/billing");
+        }
+      };
+
+      verifyPayment();
+    }
+  }, [searchParams, refetch, utils]);
 
   const handlePayment = async () => {
     setIsLoading(true);
@@ -47,6 +102,11 @@ const BillingPage = () => {
     <div>
       <h1 className="text-xl font-semibold">Billing</h1>
       <div className="h-2"></div>
+      {isVerifying && (
+        <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-2 text-blue-700">
+          <p className="text-sm">Verifying your payment...</p>
+        </div>
+      )}
       <p className="text-sm text-gray-500">
         You currently have <b>{user?.credits}</b> Repozy credits.
       </p>
@@ -80,6 +140,11 @@ const BillingPage = () => {
           ? "Processing Payment..."
           : `Buy ${creditsToBuyAmount} credits for ₹${price}/-`}
       </Button>
+      <div className="h-8"></div>
+      <div className="border-t pt-8">
+        <h2 className="text-lg font-semibold mb-4">Transaction History</h2>
+        <TransactionHistory />
+      </div>
     </div>
   );
 };

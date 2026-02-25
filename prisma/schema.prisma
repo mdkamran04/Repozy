@@ -6,7 +6,7 @@ generator client {
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  directUrl  = env("DATABASE_URL_UNPOOLED")
+  directUrl = env("DATABASE_URL_UNPOOLED")
   extensions = [vector]
 }
 
@@ -16,7 +16,7 @@ model User {
   updatedAt    DateTime @updatedAt
   imageUrl     String?
   firstName    String?
-  lastName     String?
+  lastName    String?
   emailAddress String   @unique
   credits      Int      @default(150)
 
@@ -26,6 +26,19 @@ model User {
   questionsAsked       Question[]
   cashfreeTransactions CashfreeTransaction[]
   cashfreeOrder        CashfreeOrder[]
+  apiKeys              UserApiKey?
+}
+
+model UserApiKey {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  geminiApiKey   String? // Encrypted
+  githubToken    String? // Encrypted
 }
 
 model Project {
@@ -36,7 +49,9 @@ model Project {
   name      String
   githubUrl String
 
-  deletedAt DateTime?
+  indexingProgress Int      @default(0)
+  creditsUsed      Int      @default(0)
+  deletedAt        DateTime?
 
   userToProjects       UserToProject[]
   commits              Commit[]

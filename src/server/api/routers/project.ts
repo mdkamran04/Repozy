@@ -3,6 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { z } from "zod";
 import { clerkClient } from "@clerk/clerk-sdk-node";
 import { checkCredits, indexGithubRepo } from "@/lib/github-loader";
+import { decryptApiKey } from "@/lib/encryption";
 
 
 export const projectRouter = createTRPCRouter({
@@ -57,6 +58,7 @@ export const projectRouter = createTRPCRouter({
           data: {
             githubUrl: input.githubUrl,
             name: input.name,
+            creditsUsed: fileCount,
             userToProjects: { create: { userId: user.id } },
           },
         });
@@ -69,7 +71,26 @@ export const projectRouter = createTRPCRouter({
         return createdProject;
       });
 
-      indexGithubRepo(project.id, input.githubUrl, input.githubToken, input.geminiApiKey)
+      // Fetch user's stored API keys if they didn't provide inline ones
+      let finalGithubToken = input.githubToken;
+      let finalGeminiApiKey = input.geminiApiKey;
+
+      if (!finalGithubToken || !finalGeminiApiKey) {
+        const userApiKeys = await ctx.db.userApiKey.findUnique({
+          where: { userId: user.id },
+        });
+
+        if (userApiKeys) {
+          if (!finalGithubToken && userApiKeys.githubToken) {
+            finalGithubToken = decryptApiKey(userApiKeys.githubToken);
+          }
+          if (!finalGeminiApiKey && userApiKeys.geminiApiKey) {
+            finalGeminiApiKey = decryptApiKey(userApiKeys.geminiApiKey);
+          }
+        }
+      }
+
+      indexGithubRepo(project.id, input.githubUrl, finalGithubToken, finalGeminiApiKey)
         .then(() => pollCommits(project.id))
         .catch((err) => {
           console.error("Project indexing failed:", err);
@@ -248,7 +269,137 @@ export const projectRouter = createTRPCRouter({
       });
       return { fileCount, userCredits: userCredits?.credits || 0 };
 
-    })
+    }),
+
+  getTransactionHistory: protectedProcedure
+    .query(async ({ ctx }) => {
+      const userId = ctx.user.userId!;
+
+      // Get credit purchases
+      const purchases = await ctx.db.cashfreeTransaction.findMany({
+        where: { userId, status: "SUCCESS" },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          credits: true,
+          createdAt: true,
+          status: true,
+        },
+      });
+
+      // Get projects created (credits spent)
+      const projects = await ctx.db.project.findMany({
+        where: {
+          userToProjects: { some: { userId } },
+          deletedAt: null,
+        },
+        select: {
+          id: true,
+          name: true,
+          createdAt: true,
+          creditsUsed: true,
+        },
+        orderBy: { createdAt: "desc" },
+      });
+
+      // Map to transaction format
+      const transactions = [
+        ...purchases.map((p) => ({
+          id: p.id,
+          type: "PURCHASE" as const,
+          amount: p.credits,
+          description: `Credits purchased`,
+          date: p.createdAt,
+          projectName: null as string | null,
+        })),
+        ...projects
+          .filter((p) => p.creditsUsed > 0) // Only show projects where credits were actually spent
+          .map((p) => ({
+            id: p.id,
+            type: "SPENT" as const,
+            amount: p.creditsUsed,
+            description: `Credits used for project indexing`,
+            date: p.createdAt,
+            projectName: p.name,
+          })),
+      ];
+
+      // Sort by date descending
+      return transactions.sort((a, b) => b.date.getTime() - a.date.getTime());
+    }),
+
+  saveUserApiKeys: protectedProcedure
+    .input(z.object({
+      geminiApiKey: z.string().optional(),
+      githubToken: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user.userId!;
+
+      // Import encryption functions
+      const { encryptApiKey } = await import("@/lib/encryption");
+
+      // Encrypt the keys
+      const encryptedData: { geminiApiKey?: string; githubToken?: string } = {};
+      if (input.geminiApiKey) {
+        encryptedData.geminiApiKey = encryptApiKey(input.geminiApiKey);
+      }
+      if (input.githubToken) {
+        encryptedData.githubToken = encryptApiKey(input.githubToken);
+      }
+
+      // Upsert the API keys
+      const result = await ctx.db.userApiKey.upsert({
+        where: { userId },
+        update: encryptedData,
+        create: {
+          userId,
+          ...encryptedData,
+        },
+      });
+
+      return {
+        success: true,
+        message: "API keys saved successfully",
+      };
+    }),
+
+  getUserApiKeysStatus: protectedProcedure
+    .query(async ({ ctx }) => {
+      const userId = ctx.user.userId!;
+
+      const apiKeys = await ctx.db.userApiKey.findUnique({
+        where: { userId },
+        select: {
+          geminiApiKey: true,
+          githubToken: true,
+        },
+      });
+
+      return {
+        hasGeminiKey: !!apiKeys?.geminiApiKey,
+        hasGithubToken: !!apiKeys?.githubToken,
+      };
+    }),
+
+  deleteUserApiKey: protectedProcedure
+    .input(z.object({
+      keyType: z.enum(["gemini", "github"]),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user.userId!;
+
+      const updateData = input.keyType === "gemini"
+        ? { geminiApiKey: null }
+        : { githubToken: null };
+
+      await ctx.db.userApiKey.update({
+        where: { userId },
+        data: updateData,
+      });
+
+      return { success: true };
+    }),
 
 
 });

@@ -3,6 +3,7 @@
 import { Cashfree, CFEnvironment } from 'cashfree-pg';
 import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
+import { db } from '@/server/db';
 
 const cashfree = new Cashfree(
   CFEnvironment.SANDBOX,
@@ -43,7 +44,7 @@ export async function createCashfreeCheckoutSession(credits: number) {
       customer_email: customerEmail,
     },
     order_meta: {
-      return_url: `${process.env.NEXT_PUBLIC_URL}/dashboard?order_id={order_id}&order_status={order_status}`,
+      return_url: `${process.env.NEXT_PUBLIC_URL}/billing?order_id={order_id}&order_status={order_status}`,
       notify_url: `${process.env.NEXT_PUBLIC_URL}/api/webhook/cashfree`,
       // FIX: Use a redundant custom field in order_meta for better webhook reliability
       custom_data: metadataJsonString, 
@@ -55,6 +56,43 @@ export async function createCashfreeCheckoutSession(credits: number) {
   try {
     const response = await cashfree.PGCreateOrder(request);
     if (response.status === 200 && response.data?.payment_session_id) {
+      // Store the order in our database with metadata for fallback verification
+      try {
+        await db.cashfreeOrder.create({
+          data: {
+            orderId,
+            isFulfilled: false,
+            userId,
+          },
+        });
+        console.log(`[Cashfree] Order created in DB: ${orderId}`);
+        
+        // Also create a placeholder transaction record with metadata for quick lookup
+        await db.cashfreeTransaction.create({
+          data: {
+            orderId,
+            cfPaymentId: `pending_${orderId}`,
+            status: 'PENDING',
+            rawPayload: { 
+              credits,
+              amount,
+              metadata: metadataPayload 
+            },
+            userId,
+            credits,
+          },
+        }).catch(e => {
+          // If it already exists, that's ok
+          if (e?.code !== 'P2002') throw e;
+        });
+        
+      } catch (dbError: any) {
+        // If order already exists, that's fine - just log it
+        if (dbError?.code !== 'P2002') {
+          console.error(`[Cashfree] Failed to store order in DB:`, dbError);
+        }
+      }
+
       return {
         success: true,
         paymentSessionId: response.data.payment_session_id,

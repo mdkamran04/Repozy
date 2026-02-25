@@ -22,60 +22,98 @@ export const getCommitHashes = async (githubUrl: string): Promise<Response[]> =>
     throw new Error("Invalid Github URL");
   }
 
-  const { data } = await octokit.rest.repos.listCommits({
-    owner,
-    repo,
-  });
+  try {
+    const { data } = await octokit.rest.repos.listCommits({
+      owner,
+      repo,
+    });
 
-  const sortedCommits = data.sort(
-    (a: any, b: any) =>
-      new Date(b.commit.author.date).getTime() -
-      new Date(a.commit.author.date).getTime()
-  ) as any[];
+    const sortedCommits = data.sort(
+      (a: any, b: any) =>
+        new Date(b.commit.author.date).getTime() -
+        new Date(a.commit.author.date).getTime()
+    ) as any[];
 
-  return sortedCommits.slice(0, 10).map((commit: any) => ({
-    commitHash: commit.sha as string,
-    commitMessage: commit.commit.message ?? "",
-    commitAuthorName: commit.commit?.author?.name ?? "",
-    commitAuthorAvatar: commit?.author?.avatar_url ?? "",
-    commitDate: commit.commit?.author?.date ?? "",
-  }));
+    return sortedCommits.slice(0, 10).map((commit: any) => ({
+      commitHash: commit.sha as string,
+      commitMessage: commit.commit.message ?? "",
+      commitAuthorName: commit.commit?.author?.name ?? "",
+      commitAuthorAvatar: commit?.author?.avatar_url ?? "",
+      commitDate: commit.commit?.author?.date ?? "",
+    }));
+  } catch (error: any) {
+    console.error(`GitHub API error fetching commits from ${githubUrl}:`, error.message);
+    
+    // Handle specific error codes
+    if (error.status === 502 || error.status === 503) {
+      console.warn('GitHub API temporarily unavailable (502/503). Returning empty commits.');
+      return [];
+    }
+    
+    if (error.status === 403) {
+      console.error('GitHub API rate limit exceeded or authentication failed.');
+      throw new Error('GitHub API rate limit exceeded. Please try again later or add a GitHub token.');
+    }
+    
+    if (error.status === 404) {
+      throw new Error('Repository not found. Please check the GitHub URL.');
+    }
+    
+    // Re-throw other errors
+    throw error;
+  }
 };
 
 
 export const pollCommits = async (projectId: string) => {
-  const { githubUrl } = await fetchProjectGithubUrl(projectId);
-  const commitHashes = await getCommitHashes(githubUrl);
+  try {
+    const { githubUrl } = await fetchProjectGithubUrl(projectId);
+    const commitHashes = await getCommitHashes(githubUrl);
 
-  const unprocessedCommits = await filterUnprocessedCommits(projectId, commitHashes);
+    // If no commits fetched (e.g., GitHub API failure), return early
+    if (commitHashes.length === 0) {
+      console.log(`No commits to process for project ${projectId}`);
+      return [];
+    }
 
-  const summaryResponses = await Promise.allSettled(
-    unprocessedCommits.map((commit) => summariseCommit(githubUrl, commit.commitHash))
-  );
+    const unprocessedCommits = await filterUnprocessedCommits(projectId, commitHashes);
 
-  const summaries = summaryResponses.map((response) => {
-    if (response.status === "fulfilled") return response.value as string;
-    return "";
-  });
+    if (unprocessedCommits.length === 0) {
+      console.log(`No new commits for project ${projectId}`);
+      return [];
+    }
 
-  await db.commit.createMany({
-    data: summaries.map((summary, index) => {
-      console.log(`Processing commit ${index} :`);
-      const commit = unprocessedCommits[index]!;
-      return {
-        projectId,
-        commitHash: commit.commitHash,
-        commitMessage: commit.commitMessage,
-        commitAuthorName: commit.commitAuthorName,
-        commitAuthorAvatar: commit.commitAuthorAvatar,
-        commitDate: commit.commitDate,
-        summary,
-      };
-    }),
-    skipDuplicates: true, // prevent unique constraint issues
-  });
+    const summaryResponses = await Promise.allSettled(
+      unprocessedCommits.map((commit) => summariseCommit(githubUrl, commit.commitHash))
+    );
 
-  return unprocessedCommits;
+    const summaries = summaryResponses.map((response) => {
+      if (response.status === "fulfilled") return response.value as string;
+      return "";
+    });
+
+    await db.commit.createMany({
+      data: summaries.map((summary, index) => {
+        console.log(`Processing commit ${index} :`);
+        const commit = unprocessedCommits[index]!;
+        return {
+          projectId,
+          commitHash: commit.commitHash,
+          commitMessage: commit.commitMessage,
+          commitAuthorName: commit.commitAuthorName,
+          commitAuthorAvatar: commit.commitAuthorAvatar,
+          commitDate: commit.commitDate,
+          summary,
+        };
+      }),
+    });
+
+    return unprocessedCommits;
+  } catch (error) {
+    console.error(`Failed to poll commits for project ${projectId}:`, error);
+    // Don't throw - allow the app to continue even if commit polling fails
+    return [];
+  }
 };
 
 

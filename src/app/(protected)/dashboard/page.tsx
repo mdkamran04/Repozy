@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 import useProject from "@/hooks/use-project";
 import { ExternalLink, Github } from "lucide-react";
@@ -11,12 +11,25 @@ import MeetingCard from "./meeting-card";
 import ArchiveButton from "./archive-button";
 import InviteButton from "./invite-button";
 import TeamMembers from "./team-members";
+import { useIndexingProgress } from "@/hooks/use-indexing-progress";
+import { ProjectIndexingLoader } from "@/components/project-indexing-loader";
 
 const DashboardPage = () => {
   const { project } = useProject();
+  const { progress, isIndexing } = useIndexingProgress(project?.id ?? null);
+  const [showIndexing, setShowIndexing] = useState(true);
 
   return (
     <div>
+      {project && showIndexing && (
+        <div className="mb-4">
+          <ProjectIndexingLoader 
+            progress={progress} 
+            isIndexing={isIndexing}
+            onClose={() => setShowIndexing(false)}
+          />
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-y-4">
         <div className="w-fit items-center rounded-md bg-primary px-2 py-3">
           <div className="flex items-center">
